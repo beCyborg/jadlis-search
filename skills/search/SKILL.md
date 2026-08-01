@@ -1,6 +1,6 @@
 ---
 name: search
-description: "Поиск информации в интернете через Brave Search API (тариф Search) + Firecrawl. Tiered routing по интенту: brave_llm_context (контент), brave_web_search (источники), firecrawl_scrape (полная страница).\nTRIGGER when: user says \"найди в интернете\", \"поищи в интернете\", \"загугли\", \"найди информацию о\", \"что известно о\", \"поищи в сети\", \"search\", \"/search\", \"web search\", or asks to find/research information online.\nDO NOT TRIGGER when: research across communities (use /jadlis-research:full-research), scraping known URL (use `mcp__firecrawl__firecrawl_scrape` напрямую), code/library docs (use Context7), GitHub (use gh CLI)."
+description: "Поиск информации в интернете через Brave Search API (тариф Search) + Firecrawl. Tiered routing по интенту: brave_llm_context (контент), brave_web_search (источники), firecrawl_scrape (полная страница).\nTRIGGER when: user says \"найди в интернете\", \"поищи в интернете\", \"загугли\", \"найди информацию о\", \"что известно о\", \"поищи в сети\", \"search\", \"/search\", \"web search\", or asks to find/research information online.\nDO NOT TRIGGER when: research across communities (use /jadlis-research:full-research), scraping known URL (use `mcp__plugin_jadlis-research_firecrawl__firecrawl_scrape` напрямую), code/library docs (use Context7), GitHub (use gh CLI)."
 argument-hint: <query>
 ---
 
@@ -32,7 +32,7 @@ argument-hint: <query>
 
 ## Path A — LLM Context (default для research)
 
-`mcp__brave-search__brave_llm_context` возвращает **сам контент** страниц одним вызовом: `grounding.generic[]` (url, title, `snippets[]` — текст/таблицы/код) + `sources` (метаданные, `age`). Ты синтезируешь ответ и цитируешь URL из `sources`. Скрапинг НЕ нужен.
+`mcp__plugin_jadlis-research_brave-search__brave_llm_context` возвращает **сам контент** страниц одним вызовом: `grounding.generic[]` (url, title, `snippets[]` — текст/таблицы/код) + `sources` (метаданные, `age`). Ты синтезируешь ответ и цитируешь URL из `sources`. Скрапинг НЕ нужен.
 
 **Token budget по сложности задачи:**
 
@@ -57,7 +57,7 @@ argument-hint: <query>
 Когда нужен список ссылок/источников, а не синтезированный контент:
 
 ```
-mcp__brave-search__brave_web_search(query: "...", extra_snippets: true, count: 10-20)
+mcp__plugin_jadlis-research_brave-search__brave_web_search(query: "...", extra_snippets: true, count: 10-20)
 ```
 
 - `extra_snippets: true` — до 5 выдержек на результат (больше контекста без скрапа).
@@ -69,7 +69,7 @@ mcp__brave-search__brave_web_search(query: "...", extra_snippets: true, count: 1
 Когда нужен ПОЛНЫЙ текст одной страницы (длинная статья, документация):
 
 ```
-mcp__firecrawl__firecrawl_scrape(url: "<url>", formats: ["markdown"], onlyMainContent: true)
+mcp__plugin_jadlis-research_firecrawl__firecrawl_scrape(url: "<url>", formats: ["markdown"], onlyMainContent: true)
 ```
 
 - `onlyMainContent: true` — тело без меню/футера (это «полная страница» для чтения); `false` — всё, включая навигацию.
@@ -94,6 +94,6 @@ mcp__firecrawl__firecrawl_scrape(url: "<url>", formats: ["markdown"], onlyMainCo
 
 - **Соцсети/сообщества, глубокое исследование** → `/jadlis-research:full-research`
 - **Научная литература** → `/jadlis-research:search-paper`
-- **Контент известного URL** → `mcp__firecrawl__firecrawl_scrape` напрямую
+- **Контент известного URL** → `mcp__plugin_jadlis-research_firecrawl__firecrawl_scrape` напрямую
 - **Документация библиотек/SDK** → Context7 MCP (`resolve-library-id` → `query-docs`)
 - **GitHub issues/PRs/repos** → `gh` CLI или GitHub MCP
