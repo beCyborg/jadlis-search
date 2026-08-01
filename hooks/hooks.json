@@ -1,0 +1,12 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__plugin_jadlis-research_firecrawl__firecrawl_(scrape|extract)",
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/block-pdf-firecrawl.py" }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "mcpServers": {
+    "brave-search": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@brave/brave-search-mcp-server"],
+      "env": { "BRAVE_API_KEY": "${user_config.BRAVE_API_KEY}" }
+    },
+    "firecrawl": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "firecrawl-mcp"],
+      "env": { "FIRECRAWL_API_KEY": "${user_config.FIRECRAWL_API_KEY}" }
+    },
+    "reddit": {
+      "type": "http",
+      "url": "https://reddit-research-mcp.fastmcp.app/mcp"
+    },
+    "hn": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "hn-mcp"]
+    },
+    "substack": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "--directory", "${CLAUDE_PLUGIN_ROOT}/vendor/substack-mcp", "run_mcp_server.py"],
+      "env": { "UV_PROJECT_ENVIRONMENT": "${CLAUDE_PLUGIN_DATA}/substack-venv" }
+    }
+  }
+}
