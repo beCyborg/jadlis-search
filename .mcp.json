@@ -26,6 +26,12 @@
       "command": "uv",
       "args": ["run", "--directory", "${CLAUDE_PLUGIN_ROOT}/vendor/substack-mcp", "run_mcp_server.py"],
       "env": { "UV_PROJECT_ENVIRONMENT": "${CLAUDE_PLUGIN_DATA}/substack-venv" }
+    },
+    "reddit-alt": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "redditapis-mcp@latest"],
+      "env": { "REDDITAPIS_KEY": "${user_config.REDDITAPIS_KEY}" }
     }
   }
 }
