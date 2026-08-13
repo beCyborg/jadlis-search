@@ -37,7 +37,8 @@ TEMPLATES  = ${CLAUDE_PLUGIN_ROOT}/assets/verif-homes
 S="$HOME/.claude/settings.json"
 [ -f "$S" ] || { mkdir -p "$HOME/.claude"; echo '{}' > "$S"; echo "СОЗДАН пустой settings.json"; }
 for K in PUBMED_API_KEY PUBMED_EMAIL SEMANTIC_SCHOLAR_API_KEY OPENALEX_API_KEY OPENALEX_MAILTO \
-         CROSSREF_MAILTO UNPAYWALL_EMAIL CORE_API_KEY SCITE_API_KEY CONSENSUS_API_KEY; do
+         CROSSREF_MAILTO UNPAYWALL_EMAIL CORE_API_KEY SCITE_API_KEY CONSENSUS_API_KEY \
+         YC_SEARCH_API_KEY; do
   V=$(jq -r --arg k "$K" '.env[$k] // ""' "$S")
   if [ -n "$V" ]; then printf '%-26s ЕСТЬ (длина %s)\n' "$K" "${#V}"; else printf '%-26s НЕТ\n' "$K"; fi
 done
@@ -47,7 +48,11 @@ done
 
 | Обязательные | Опциональные (модули включаются, только если ключ есть) |
 |---|---|
-| `PUBMED_API_KEY`, `PUBMED_EMAIL`, `SEMANTIC_SCHOLAR_API_KEY`, `OPENALEX_API_KEY`, `OPENALEX_MAILTO`, `CROSSREF_MAILTO`, `UNPAYWALL_EMAIL` | `CORE_API_KEY`, `SCITE_API_KEY`, `CONSENSUS_API_KEY` |
+| `PUBMED_API_KEY`, `PUBMED_EMAIL`, `SEMANTIC_SCHOLAR_API_KEY`, `OPENALEX_API_KEY`, `OPENALEX_MAILTO`, `CROSSREF_MAILTO`, `UNPAYWALL_EMAIL` | `CORE_API_KEY`, `SCITE_API_KEY`, `CONSENSUS_API_KEY`, `YC_SEARCH_API_KEY` |
+
+`YC_SEARCH_API_KEY` — только для opt-in канала `yandex` в `/jadlis-research:full-research`
+(поиск по Рунету, платный ≈0,1-0,15 ₽/тема). Без него канал не предлагается и, если всё-таки
+выбран, деградирует (`exit 2`, `sourceQuality=LOW`) — остальной ресерч работает как обычно.
 
 ## Шаг 2 — где взять недостающее
 
@@ -61,6 +66,7 @@ done
 | `CROSSREF_MAILTO` | регистрации нет — своя почта для polite pool |
 | `UNPAYWALL_EMAIL` | регистрации нет — своя почта в параметре `email=` |
 | `CORE_API_KEY` | https://core.ac.uk/services/api |
+| `YC_SEARCH_API_KEY` | https://console.yandex.cloud → сервисный аккаунт с ролью `search-api.webSearch.user` → создать **Api-Key** (не IAM-токен) |
 
 `*_MAILTO` и `*_EMAIL` — контактные почты пользователя, не ключи: по ним API узнают, кто
 стучится, и пускают в вежливый пул. Одна и та же почта во всех трёх — нормально.
@@ -134,6 +140,14 @@ p "Europe PMC" "" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 \
   'https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=aspirin&format=json&pageSize=1')"
 
 echo "---"
+# Яндекс: только --dry-run (0 ₽, живого вызова нет). Ключ проверяется отдельно — по наличию в env.
+YC=$(g YC_SEARCH_API_KEY)
+if bash "${CLAUDE_PLUGIN_ROOT}/scripts/yandex-search.sh" "тест" --dry-run >/dev/null 2>&1; then
+  [ -n "$YC" ] && echo "yandex-search PASS (скрипт ок, ключ задан)" \
+               || echo "yandex-search SKIP (скрипт ок, YC_SEARCH_API_KEY не задан — канал yandex выключен)"
+else
+  echo "yandex-search FAIL (скрипт не отработал --dry-run)"
+fi
 command -v codex >/dev/null && echo "codex CLI     PASS" || echo "codex CLI     FAIL (нет в PATH)"
 command -v grok  >/dev/null || [ -x "$HOME/.grok/bin/grok" ] && echo "grok CLI      PASS" || echo "grok CLI      FAIL (нет в PATH)"
 command -v uv    >/dev/null && echo "uv (substack) PASS" || echo "uv (substack) FAIL — brew install uv"
