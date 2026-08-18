@@ -14,8 +14,9 @@ argument-hint: "[--check — только проверка, без записи]
 долетают (уезжают только в MCP/LSP-конфиги и хук-процессы). Поэтому им место в блоке `env`
 файла `~/.claude/settings.json`.
 
-**Рельса A** (`VAULT_PATH`, `BRAVE_API_KEY`, `FIRECRAWL_API_KEY`) этим скиллом не трогается —
-их Claude Code спрашивает сам при включении плагина.
+**Рельса A** (`VAULT_PATH`, `BRAVE_API_KEY`, `FIRECRAWL_API_KEY`, `REDDITAPIS_KEY`,
+`YOUTUBE_API_KEY`) этим скиллом не трогается — их Claude Code спрашивает сам при
+включении плагина (они уезжают в MCP-конфиги, где userConfig работает).
 
 > [!warning] Значения ключей не печатать
 > Ни в ответе пользователю, ни в эхо Bash, ни в сообщении об ошибке. Максимум — имя
@@ -38,7 +39,7 @@ S="$HOME/.claude/settings.json"
 [ -f "$S" ] || { mkdir -p "$HOME/.claude"; echo '{}' > "$S"; echo "СОЗДАН пустой settings.json"; }
 for K in PUBMED_API_KEY PUBMED_EMAIL SEMANTIC_SCHOLAR_API_KEY OPENALEX_API_KEY OPENALEX_MAILTO \
          CROSSREF_MAILTO UNPAYWALL_EMAIL CORE_API_KEY SCITE_API_KEY CONSENSUS_API_KEY \
-         YC_SEARCH_API_KEY; do
+         YC_SEARCH_API_KEY GOOGLE_PLACES_API_KEY; do
   V=$(jq -r --arg k "$K" '.env[$k] // ""' "$S")
   if [ -n "$V" ]; then printf '%-26s ЕСТЬ (длина %s)\n' "$K" "${#V}"; else printf '%-26s НЕТ\n' "$K"; fi
 done
@@ -48,11 +49,27 @@ done
 
 | Обязательные | Опциональные (модули включаются, только если ключ есть) |
 |---|---|
-| `PUBMED_API_KEY`, `PUBMED_EMAIL`, `SEMANTIC_SCHOLAR_API_KEY`, `OPENALEX_API_KEY`, `OPENALEX_MAILTO`, `CROSSREF_MAILTO`, `UNPAYWALL_EMAIL` | `CORE_API_KEY`, `SCITE_API_KEY`, `CONSENSUS_API_KEY`, `YC_SEARCH_API_KEY` |
+| `PUBMED_API_KEY`, `PUBMED_EMAIL`, `SEMANTIC_SCHOLAR_API_KEY`, `OPENALEX_API_KEY`, `OPENALEX_MAILTO`, `CROSSREF_MAILTO`, `UNPAYWALL_EMAIL` | `CORE_API_KEY`, `SCITE_API_KEY`, `CONSENSUS_API_KEY`, `YC_SEARCH_API_KEY`, `GOOGLE_PLACES_API_KEY` |
 
 `YC_SEARCH_API_KEY` — только для opt-in канала `yandex` в `/jadlis-research:full-research`
 (поиск по Рунету, платный ≈0,1-0,15 ₽/тема). Без него канал не предлагается и, если всё-таки
 выбран, деградирует (`exit 2`, `sourceQuality=LOW`) — остальной ресерч работает как обычно.
+
+`GOOGLE_PLACES_API_KEY` — только для place-слоя канала `web` (локальные/бытовые темы: выбор
+заведения, клиники, секции). Без него `places-fetch.sh` возвращает `exit 3 PLACES_KEY_MISSING`
+= SKIP, и слой сам деградирует в `brave_place_search` — это штатно.
+
+> [!danger] Бюджет-кап ДО первого вызова
+> У Places API нет hard cap by design: перерасход останавливается только budget alert →
+> отключение billing. Прежде чем звать `places-fetch.sh` хоть раз, поставь бюджет-кап
+> в Google Cloud Console. Дефолтная маска полей попадает в SKU Enterprise
+> ($35/1000 запросов, free tier 1000 событий/мес — при research-объёмах бесплатно);
+> `reviews` в маску не добавлять (+$5/1000).
+
+**Внешние бинарники** (не ключи, но без них каналы деградируют): `jq` (обязателен для
+`hn-fetch.sh` и `places-fetch.sh`), `uv` (шебанг `substack-fetch.py` и `yt-transcript.py`),
+`pdftotext` (poppler, для `pdf-fetch.sh`), опц. `yt-dlp` (фоллбэк транскриптов),
+опц. `codex`/`grok` CLI (каналы `codexweb`/`grokweb` и верификаторы `/jadlis-research:verif`).
 
 ## Шаг 2 — где взять недостающее
 
@@ -66,6 +83,7 @@ done
 | `CROSSREF_MAILTO` | регистрации нет — своя почта для polite pool |
 | `UNPAYWALL_EMAIL` | регистрации нет — своя почта в параметре `email=` |
 | `CORE_API_KEY` | https://core.ac.uk/services/api |
+| `GOOGLE_PLACES_API_KEY` | https://console.cloud.google.com → включить **Places API (New)** → Credentials → API key. **Сначала бюджет-кап**, потом ключ |
 | `YC_SEARCH_API_KEY` | https://console.yandex.cloud → сервисный аккаунт с ролью `search-api.webSearch.user` → создать **Api-Key** (не IAM-токен) |
 
 `*_MAILTO` и `*_EMAIL` — контактные почты пользователя, не ключи: по ним API узнают, кто
@@ -150,8 +168,23 @@ else
 fi
 command -v codex >/dev/null && echo "codex CLI     PASS" || echo "codex CLI     FAIL (нет в PATH)"
 command -v grok  >/dev/null || [ -x "$HOME/.grok/bin/grok" ] && echo "grok CLI      PASS" || echo "grok CLI      FAIL (нет в PATH)"
-command -v uv    >/dev/null && echo "uv (substack) PASS" || echo "uv (substack) FAIL — brew install uv"
+command -v uv    >/dev/null && echo "uv (substack/yt) PASS" || echo "uv (substack/yt) FAIL — brew install uv"
+command -v jq    >/dev/null && echo "jq (hn/places)   PASS" || echo "jq (hn/places)   FAIL — brew install jq"
 command -v pdftotext >/dev/null && echo "pdftotext     PASS" || echo "pdftotext     FAIL — brew install poppler"
+command -v yt-dlp >/dev/null && echo "yt-dlp (опц.) PASS" || echo "yt-dlp (опц.) SKIP — фоллбэк транскриптов недоступен"
+
+# Places: живой вызов НЕ делаем (платный) — только гейт по ключу.
+GP=$(g GOOGLE_PLACES_API_KEY)
+[ -n "$GP" ] && echo "places-fetch  PASS (ключ задан; бюджет-кап поставлен?)" \
+             || echo "places-fetch  SKIP (GOOGLE_PLACES_API_KEY не задан — place-слой идёт через Brave Place)"
+
+# Свои фетчеры каналов hackernews / substack / telegram / youtube (сеть, 0 ₽).
+R="${CLAUDE_PLUGIN_ROOT}/scripts"
+bash "$R/hn-fetch.sh" canary >/dev/null 2>&1 && echo "hn-fetch      PASS" || echo "hn-fetch      FAIL (нет jq или сеть)"
+bash "$R/tg-preview.sh" durov >/dev/null 2>&1 && echo "tg-preview    PASS" || echo "tg-preview    FAIL (сеть или t.me недоступен)"
+"$R/substack-fetch.py" search-pub "ai agents" >/dev/null 2>&1 && echo "substack-fetch PASS" || echo "substack-fetch FAIL (нет uv или сеть)"
+"$R/yt-transcript.py" jNQXAC9IVRw >/dev/null 2>&1 && echo "yt-transcript PASS" \
+  || echo "yt-transcript SKIP (IpBlocked/нет сабов — канал youtube живёт на Brave + описаниях)"
 ```
 
 Разбор FAIL:

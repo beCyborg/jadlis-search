@@ -16,22 +16,17 @@
       "type": "http",
       "url": "https://reddit-research-mcp.fastmcp.app/mcp"
     },
-    "hn": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "hn-mcp"]
-    },
-    "substack": {
-      "type": "stdio",
-      "command": "uv",
-      "args": ["run", "--directory", "${CLAUDE_PLUGIN_ROOT}/vendor/substack-mcp", "run_mcp_server.py"],
-      "env": { "UV_PROJECT_ENVIRONMENT": "${CLAUDE_PLUGIN_DATA}/substack-venv" }
-    },
     "reddit-alt": {
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "redditapis-mcp@latest"],
       "env": { "REDDITAPIS_KEY": "${user_config.REDDITAPIS_KEY}" }
+    },
+    "youtube": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "youtube-data-mcp-server"],
+      "env": { "YOUTUBE_API_KEY": "${user_config.YOUTUBE_API_KEY}" }
     }
   }
 }
