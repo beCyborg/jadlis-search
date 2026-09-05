@@ -23,7 +23,7 @@ argument-hint: <query>
 | Люди / компании / научные публикации / новости по типу | `python3 $S exa "…" --tag people\|company\|research\|news --category people\|company\|publication\|news` |
 | Ограничить домены / даты | Exa: `--include-domains a.com,b.org` `--exclude-domains …` `--start 2026-01-01 --end …`; Brave: `--goggles $'$discard\n$site=vc.ru'` `--freshness pd\|pw\|pm\|py` |
 | Оба движка — **только по явной просьбе** («сравни движки», «через оба») | `python3 $S both "<q>" --tag … [--query-exa "<описание страницы>"]` → синтез → `verdict` (опционально) |
-| Одна страница целиком / подстраницы / свежий краул | `python3 $S contents <url…> [--text\|--highlights\|--summary] [--max-chars N] [--subpages 5 --subpage-target api,pricing] [--max-age-hours 0]` (~$0.001/стр.) → фоллбэк `mcp__plugin_jadlis-research_firecrawl__firecrawl_scrape` |
+| Одна страница целиком / подстраницы / свежий краул | `python3 $S contents <url…> --full [--text\|--highlights\|--summary] [--subpages 5 --subpage-target api,pricing] [--max-age-hours 0]` (~$0.001/стр.; **`--full` обязателен для снапшотов** — дефолт `--max-chars 8000` молча режет страницу) → фоллбэк `mcp__plugin_jadlis-research_firecrawl__firecrawl_scrape` |
 | Код / API / библиотека | Context7 → `python3 $S context "<q>" [--tokens 5000]` (Exa Code, $0.007) |
 | **Страница = PDF** | `bash "${CLAUDE_PLUGIN_ROOT}/scripts/pdf-fetch.sh" "<url>"` → `Read` (0 кр; Firecrawl биллит 1 кр/стр, хук deny-ит) |
 | Новости / картинки / видео | `mcp__plugin_jadlis-research_brave-search__brave_news_search` / `brave_image_search` / `brave_video_search` (или `exa --category news`) |
@@ -51,7 +51,7 @@ python3 $S exa "пробиотики при акне исследования" -
 python3 $S exa "systematic review of X" --tag research --category publication --start 2026-01-01 -n 10
 python3 $S both "exa vs brave neural search" --tag research -n 5            # только по просьбе: пара + pair_id
 python3 $S verdict 8e509b38 exa --why relevance --note "Brave дал маркетинг"  # опционально после both
-python3 $S contents https://exa.ai/docs --subpages 5 --subpage-target api --max-chars 4000
+python3 $S contents https://exa.ai/docs --full --subpages 5 --subpage-target api            # --full: без обрезки 8000 симв.
 python3 $S context "python urllib POST json custom headers" --tokens 5000
 python3 $S report --since 14d                                               # сводка лога (стоимость, пары)
 python3 $S exa "q" --tag other --dry-run                                    # тело запроса, $0, ключ не нужен

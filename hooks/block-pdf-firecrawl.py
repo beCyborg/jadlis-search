@@ -29,7 +29,7 @@ def deny(reason):
     sys.exit(0)
 if any(x_host(u) for u in urls):
     deny("x.com/twitter.com: Firecrawl отдаёт AI-обработанный пересказ за ~30 кредитов, дословного тела страницы нет — "
-         "снапшот из него гейт не закроет. Дословный текст — `defuddle parse <url> --md` или Tavily keyless; "
+         "снапшот из него гейт не закроет. Дословный текст — `defuddle parse <url> --md` или `curl https://r.jina.ai/<url>`; "
          "твиты/треды — канал twitter (Grok x_*).")
 if any(PDF.search(u) for u in urls):
     parsers = ti.get("parsers") or []
