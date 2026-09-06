@@ -216,6 +216,10 @@ unset WEBSEARCH_LOG
 if [[ "${1:-}" == "--live" ]]; then
   echo "== wave 4: live smoke (≈\$0.02) =="
   export WEBSEARCH_LOG="${WEBSEARCH_LOG_LIVE:-$HOME/.claude/telemetry/search-ab/events.jsonl}"
+  # Key standard: env -> macOS Keychain. websearch.py resolves on its own; the guards below
+  # need the values in the environment too, so pull whatever is missing through secret.sh.
+  SECRET_SH="$(cd "$(dirname "$WS")" && pwd)/secret.sh"
+  [[ -f "$SECRET_SH" ]] && eval "$(bash "$SECRET_SH" --export EXA_API_KEY BRAVE_API_KEY 2>/dev/null || true)"
   if [[ -z "${EXA_API_KEY:-}" && ! -s "$HOME/.config/exa/key" ]]; then
     fail "live: EXA_API_KEY not set"
   else

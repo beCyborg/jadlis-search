@@ -8,7 +8,7 @@
 ## Auth, база, лимиты
 
 - База `https://api.exa.ai`; заголовок `x-api-key: $EXA_API_KEY` (принимается и `Authorization: Bearer`).
-- Ключ: env `EXA_API_KEY` (`~/.zshenv`), фоллбэк файл `~/.config/exa/key` (mode 600) — так же резолвят скиллы Exa.
+- Ключ: env `EXA_API_KEY` → файл `~/.config/exa/key` (mode 600) → Связка ключей macOS через `scripts/secret.sh` — именно в этом порядке резолвит `websearch.py`.
 - Бесплатно: $20 на старте (~2 800 поисков) + $10/мес, карта не нужна. Дашборд: https://dashboard.exa.ai
 - QPS: `/search` 10 (free-тир 5), `/contents` 100, `/answer` 10. 429 → `{"error":"You've exceeded your Exa rate limit…"}`. Баланс лимиты не поднимает.
 

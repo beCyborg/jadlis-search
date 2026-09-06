@@ -6,7 +6,7 @@ argument-hint: <query>
 
 # Web Search — Brave + Exa через `websearch.py`
 
-Два движка, один скрипт: `S=${CLAUDE_PLUGIN_ROOT}/scripts/websearch.py`. Ключи — env `EXA_API_KEY`, `BRAVE_API_KEY` (блок `env` в settings.json, ставит `/jadlis-research:keys`). Каждый вызов пишет `[cost]` в stderr и строку в лог `$WEBSEARCH_LOG` (дефолт — `telemetry/search-ab/events.jsonl` в конфиг-дире Claude); лог остаётся источником для `report` и телеметрии стоимости.
+Два движка, один скрипт: `S=${CLAUDE_PLUGIN_ROOT}/scripts/websearch.py`. Ключи — `EXA_API_KEY`, `BRAVE_API_KEY`: скрипт резолвит их сам по стандарту плагина (env → Связка ключей macOS через `scripts/secret.sh`; заводит их `/jadlis-research:keys`, Brave — ещё и `/plugin configure jadlis-research@jadlis`). Каждый вызов пишет `[cost]` в stderr и строку в лог `$WEBSEARCH_LOG` (дефолт — `telemetry/search-ab/events.jsonl` в конфиг-дире Claude); лог остаётся источником для `report` и телеметрии стоимости.
 
 **Итог A/B «Exa vs Brave» (окно 25.08–07.09.2026, закрыто досрочно 01.09):** счёт 38:34:30 (exa:brave:tie) — ничья. Решение: **роутинг по интенту**, `both` больше не дефолт, `verdict` после пары — по желанию (лог принимает, отчёт считает). Движок выбирается по тому, что он умеет, а не «оба и сравнить».
 

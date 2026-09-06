@@ -1,6 +1,6 @@
 ---
 name: keys
-description: "Настройка ключей ресерч-стека: пишет научные ключи в блок env файла ~/.claude/settings.json, разворачивает рабочие homes верификаторов, ставит симлинки auth.json и гоняет smoke-проверку по каждому источнику с таблицей PASS/FAIL.\nTRIGGER when: user says \"настрой ключи\", \"ключи ресерча\", \"проверь ключи\", \"keys\", \"/jadlis-research:keys\", \"research keys\", \"почему PubMed не отвечает\", \"смоук источников\", or has just installed jadlis-research and needs configuration.\nDO NOT TRIGGER when: обычный поиск (use /jadlis-research:search), настройка Brave/Firecrawl (они спрашиваются плагином при включении, не здесь)."
+description: "Ключи ресерч-стека по единому стандарту: всё живёт в Связке ключей macOS, а не в файлах. Показывает, что уже заведено (имена и длины, без значений), принимает недостающие значения по одному и пишет их через scripts/secret.sh, переносит legacy-ключи из settings.json в Связку, разворачивает рабочие homes верификаторов и гоняет smoke-проверку по каждому источнику с таблицей PASS/FAIL.\nTRIGGER when: user says \"настрой ключи\", \"ключи ресерча\", \"проверь ключи\", \"keys\", \"/jadlis-research:keys\", \"research keys\", \"куда положить ключ\", \"почему PubMed не отвечает\", \"смоук источников\", or has just installed jadlis-research and needs configuration.\nDO NOT TRIGGER when: обычный поиск (use /jadlis-research:search), верификация плана (use /jadlis-research:verif)."
 allowed-tools: Read, Edit, Write, Bash, AskUserQuestion
 argument-hint: "[--check — только проверка, без записи]"
 ---
@@ -9,50 +9,57 @@ argument-hint: "[--check — только проверка, без записи]
 
 `$ARGUMENTS`
 
-Ставит **рельсу B**: ключи, которые подставляются в `curl` внутри протоколов. Они не могут
-жить в `userConfig` плагина — сенситивные значения плагина до обычных Bash-вызовов не
-долетают (уезжают только в MCP/LSP-конфиги и хук-процессы). Поэтому им место в блоке `env`
-файла `~/.claude/settings.json`.
+Один принцип: **ключ вводится один раз и живёт в Связке ключей macOS (Keychain), не в файлах.**
+Читает их единая точка — `${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh`.
 
-**Рельса A** (`VAULT_PATH`, `BRAVE_API_KEY`, `FIRECRAWL_API_KEY`, `REDDITAPIS_KEY`,
-`YOUTUBE_API_KEY`) этим скиллом не трогается — их Claude Code спрашивает сам при
-включении плагина (они уезжают в MCP-конфиги, где userConfig работает).
+| Класс | Что за ключи | Кто пишет | Как читает |
+|---|---|---|---|
+| **A** — ключи MCP-серверов плагина | `BRAVE_API_KEY`, `FIRECRAWL_API_KEY`, `REDDITAPIS_KEY`, `YOUTUBE_API_KEY` | сам Claude Code: `/plugin configure jadlis-research@jadlis`, диалог при включении плагина или `claude plugin install … --config KEY=…` | MCP — через `${user_config.KEY}`; Bash — через `secret.sh` |
+| **B** — ключи скриптов и `curl`-блоков | научные источники, Exa, Yandex, Places, контактные почты | этот скилл: `secret.sh --set KEY` (значение приходит на stdin) | `secret.sh KEY` или прелюд `eval "$(… --export …)"` |
+
+Порядок разрешения в `secret.sh`: (1) переменная окружения, (2) Keychain `jadlis-research`/`KEY`,
+(3) `pluginSecrets` из блоба `Claude Code-credentials` (затем `Claude Code-credentials-*`),
+(4) `.credentials.json`, (5) `settings.json → env` — legacy-рельса, которую этот скилл предлагает
+свернуть (шаг 5).
 
 > [!warning] Значения ключей не печатать
 > Ни в ответе пользователю, ни в эхо Bash, ни в сообщении об ошибке. Максимум — имя
 > переменной и длина значения. Один вывод ключа в транскрипт = ключ скомпрометирован.
+> Значение всегда идёт на stdin, **никогда в командную строку** (командная строка видна
+> в `ps` и попадает в транскрипт).
 
 ## Константы
 
 ```
-SETTINGS   = ~/.claude/settings.json
+SECRET     = ${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh
 HOMES      = ${CLAUDE_PLUGIN_DATA}/verif-homes
 TEMPLATES  = ${CLAUDE_PLUGIN_ROOT}/assets/verif-homes
 ```
 
 ## Шаг 1 — что уже есть
 
-Один Bash-вызов. Показывает **только имена и длины**, не значения:
+Один Bash-вызов. Печатает **имена, длины и источник**, не значения:
 
 ```bash
-S="$HOME/.claude/settings.json"
-[ -f "$S" ] || { mkdir -p "$HOME/.claude"; echo '{}' > "$S"; echo "СОЗДАН пустой settings.json"; }
-for K in PUBMED_API_KEY PUBMED_EMAIL SEMANTIC_SCHOLAR_API_KEY OPENALEX_API_KEY OPENALEX_MAILTO \
-         CROSSREF_MAILTO UNPAYWALL_EMAIL CORE_API_KEY SCITE_API_KEY CONSENSUS_API_KEY \
-         YC_SEARCH_API_KEY GOOGLE_PLACES_API_KEY; do
-  V=$(jq -r --arg k "$K" '.env[$k] // ""' "$S")
-  if [ -n "$V" ]; then printf '%-26s ЕСТЬ (длина %s)\n' "$K" "${#V}"; else printf '%-26s НЕТ\n' "$K"; fi
-done
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh" --list
 ```
+
+Прочитай таблицу и раздели ключи на три кучки:
+- **есть, источник `keychain generic` или `pluginSecrets`** — по стандарту, трогать не надо;
+- **есть, источник `settings.json env`** — legacy, предложить перенос на шаге 5;
+- **НЕТ** — недостающие, шаги 2–4.
 
 Разделение на обязательные и опциональные:
 
 | Обязательные | Опциональные (модули включаются, только если ключ есть) |
 |---|---|
-| `PUBMED_API_KEY`, `PUBMED_EMAIL`, `SEMANTIC_SCHOLAR_API_KEY`, `OPENALEX_API_KEY`, `OPENALEX_MAILTO`, `CROSSREF_MAILTO`, `UNPAYWALL_EMAIL` | `CORE_API_KEY`, `SCITE_API_KEY`, `CONSENSUS_API_KEY`, `YC_SEARCH_API_KEY`, `GOOGLE_PLACES_API_KEY` |
+| `BRAVE_API_KEY`, `FIRECRAWL_API_KEY` (класс A) · `PUBMED_API_KEY`, `PUBMED_EMAIL`, `SEMANTIC_SCHOLAR_API_KEY`, `OPENALEX_API_KEY`, `OPENALEX_MAILTO`, `CROSSREF_MAILTO`, `UNPAYWALL_EMAIL` (класс B) | `REDDITAPIS_KEY`, `YOUTUBE_API_KEY`, `EXA_API_KEY`, `CORE_API_KEY`, `SCITE_API_KEY`, `CONSENSUS_API_KEY`, `YC_SEARCH_API_KEY`, `GOOGLE_PLACES_API_KEY`, `TAVILY_API_KEY`, `SERPER_API_KEY`, `WYKOP_API_KEY` |
+
+Нужен только `/jadlis-research:verif` — хватит `BRAVE_API_KEY` и `FIRECRAWL_API_KEY`; научные ключи
+можно пропустить и вернуться к ним перед первым `search-paper`.
 
 `YC_SEARCH_API_KEY` — только для opt-in канала `yandex` в `/jadlis-research:full-research`
-(поиск по Рунету, платный ≈0,1-0,15 ₽/тема). Без него канал не предлагается и, если всё-таки
+(поиск по Рунету, платный ≈0,1–0,15 ₽/тема). Без него канал не предлагается и, если всё-таки
 выбран, деградирует (`exit 2`, `sourceQuality=LOW`) — остальной ресерч работает как обычно.
 
 `GOOGLE_PLACES_API_KEY` — только для place-слоя канала `web` (локальные/бытовые темы: выбор
@@ -67,54 +74,120 @@ done
 > `reviews` в маску не добавлять (+$5/1000).
 
 **Внешние бинарники** (не ключи, но без них каналы деградируют): `jq` (обязателен для
-`hn-fetch.sh` и `places-fetch.sh`), `uv` (шебанг `substack-fetch.py` и `yt-transcript.py`),
-`pdftotext` (poppler, для `pdf-fetch.sh`), опц. `yt-dlp` (фоллбэк транскриптов),
-опц. `codex`/`grok` CLI (каналы `codexweb`/`grokweb` и верификаторы `/jadlis-research:verif`).
+`secret.sh`, `hn-fetch.sh` и `places-fetch.sh`), `uv` (шебанг `substack-fetch.py` и
+`yt-transcript.py`), `pdftotext` (poppler, для `pdf-fetch.sh`), опц. `yt-dlp` (фоллбэк
+транскриптов), опц. `codex`/`grok` CLI (каналы `codexweb`/`grokweb` и верификаторы
+`/jadlis-research:verif`).
 
 ## Шаг 2 — где взять недостающее
 
 Покажи таблицу **только по тем, которых нет**:
 
-| Переменная | Где завести |
-|---|---|
-| `PUBMED_API_KEY`, `PUBMED_EMAIL` | https://www.ncbi.nlm.nih.gov/account/settings/ → API Key Management |
-| `SEMANTIC_SCHOLAR_API_KEY` | https://www.semanticscholar.org/product/api |
-| `OPENALEX_API_KEY`, `OPENALEX_MAILTO` | https://openalex.org (freemium dashboard) |
-| `CROSSREF_MAILTO` | регистрации нет — своя почта для polite pool |
-| `UNPAYWALL_EMAIL` | регистрации нет — своя почта в параметре `email=` |
-| `CORE_API_KEY` | https://core.ac.uk/services/api |
-| `GOOGLE_PLACES_API_KEY` | https://console.cloud.google.com → включить **Places API (New)** → Credentials → API key. **Сначала бюджет-кап**, потом ключ |
-| `YC_SEARCH_API_KEY` | https://console.yandex.cloud → сервисный аккаунт с ролью `search-api.webSearch.user` → создать **Api-Key** (не IAM-токен) |
+| Переменная | Класс | Где завести |
+|---|---|---|
+| `BRAVE_API_KEY` | A | https://api-dashboard.search.brave.com → подписка на тариф **Search** → Subscriptions → API keys |
+| `FIRECRAWL_API_KEY` | A | https://firecrawl.dev/app/api-keys (формат `fc-…`) |
+| `REDDITAPIS_KEY` | A | https://redditapis.com (резервный Reddit-MCP, ~$0.002 за вызов) |
+| `YOUTUBE_API_KEY` | A | https://console.cloud.google.com → включить **YouTube Data API v3** → Credentials → API key |
+| `EXA_API_KEY` | B | https://dashboard.exa.ai → API Keys (семантический слой `/search`, $0.007/поиск) |
+| `PUBMED_API_KEY`, `PUBMED_EMAIL` | B | https://www.ncbi.nlm.nih.gov/account/settings/ → API Key Management |
+| `SEMANTIC_SCHOLAR_API_KEY` | B | https://www.semanticscholar.org/product/api |
+| `OPENALEX_API_KEY`, `OPENALEX_MAILTO` | B | https://openalex.org (freemium dashboard) |
+| `CROSSREF_MAILTO` | B | регистрации нет — своя почта для polite pool |
+| `UNPAYWALL_EMAIL` | B | регистрации нет — своя почта в параметре `email=` |
+| `CORE_API_KEY` | B | https://core.ac.uk/services/api |
+| `GOOGLE_PLACES_API_KEY` | B | https://console.cloud.google.com → включить **Places API (New)** → Credentials → API key. **Сначала бюджет-кап**, потом ключ |
+| `YC_SEARCH_API_KEY` | B | https://console.yandex.cloud → сервисный аккаунт с ролью `search-api.webSearch.user` → создать **Api-Key** (не IAM-токен) |
 
 `*_MAILTO` и `*_EMAIL` — контактные почты пользователя, не ключи: по ним API узнают, кто
 стучится, и пускают в вежливый пул. Одна и та же почта во всех трёх — нормально.
 
-## Шаг 3 — приём значений
+## Шаг 3 — класс A: ключи MCP-серверов
+
+Эти ключи **пишет Claude Code, не ты**: они уезжают в `pluginSecrets` записи Keychain
+`Claude Code-credentials`, откуда их берут и MCP-серверы (`${user_config.KEY}` в `.mcp.json`),
+и `secret.sh`.
+
+Проверь, что каждый резолвится:
+
+```bash
+for K in BRAVE_API_KEY FIRECRAWL_API_KEY REDDITAPIS_KEY YOUTUBE_API_KEY; do
+  bash "${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh" --which "$K"
+done
+```
+
+Источник `pluginSecrets (Claude Code-credentials…)` — всё по стандарту. `не найден` или
+источник `settings.json env` — скажи пользователю ввести ключ самому, **одним из трёх способов**
+(значение вводит он, не ты):
+
+1. **`/plugin configure jadlis-research@jadlis`** прямо в чате Claude Code — основной путь:
+   диалог со всеми полями `userConfig`, sensitive-значения маскируются при вводе и уезжают
+   в Связку ключей. Работает и на уже установленном плагине, и для смены ключа.
+2. Выключить и снова включить плагин (`claude plugin disable/enable jadlis-research`) — при
+   включении Claude Code спросит недостающие поля тем же диалогом.
+3. Из своего терминала: `claude plugin install jadlis-research@jadlis --config BRAVE_API_KEY=…`
+   — годится для первой установки; значение видно в истории shell, потому это запасной путь.
+
+`--check` в аргументах → шаги 4 и 5 пропустить, идти сразу на шаг 6.
+
+> [!note] Окно «security хочет получить доступ»
+> При первом чтении блоба `Claude Code-credentials` утилитой `security` macOS может показать
+> запрос доступа — нажать **«Разрешить всегда»**, иначе `secret.sh` будет видеть класс A как
+> «не найден». Записи класса B создаются с `-T /usr/bin/security` и окна не вызывают.
+
+## Шаг 4 — класс B: приём значений и запись в Связку
 
 Спроси значения **по одному**, обычным сообщением (не AskUserQuestion — там значение
 попадёт в лейбл кнопки). Формулировка: «Пришли значение `PUBMED_API_KEY` одной строкой».
 
-`--check` в аргументах → шаг 3 и 4 пропустить, идти сразу на шаг 5.
+Записывай сразу, значение — **на stdin**, никогда аргументом:
 
-## Шаг 4 — запись в `env`
+```bash
+printf '%s' "$VALUE_FROM_USER" | bash "${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh" --set PUBMED_API_KEY
+```
 
-**Только `jq` c временным файлом, никогда `Edit` по живому `settings.json`** — файл может
-одновременно писаться самим Claude Code, и ручная правка затрёт чужие изменения:
+Скрипт печатает ровно `OK: PUBMED_API_KEY записан в Keychain (длина N)`. Ничего сверх этого
+не добавляй: ни хвоста значения, ни первых символов.
+
+Под капотом это `security add-generic-password -U -s jadlis-research -a <KEY> -T /usr/bin/security -w`:
+`-U` перезаписывает существующую запись, `-T /usr/bin/security` даёт доступ без диалога.
+
+Ключи класса B читаются **без перезапуска** Claude Code — `secret.sh` ходит в Связку в момент
+вызова. Перезапуск нужен только классу A (MCP-серверы поднимаются на старте сессии).
+
+## Шаг 5 — перенос legacy-значений из `settings.json`
+
+Если на шаге 1 у какого-то ключа источник — `settings.json env`, предложи перенос:
+«`PUBMED_API_KEY` лежит открытым текстом в `~/.claude/settings.json` (права 644, попадает
+в бэкапы). Перенести в Связку ключей и удалить из файла?»
+
+Без подтверждения **не трогать файл**. После «да» — по одному ключу:
 
 ```bash
 S="$HOME/.claude/settings.json"
 NAME="PUBMED_API_KEY"
-read -r VALUE   # значение приходит на stdin, в командную строку не попадает
-T=$(mktemp)
-jq --arg k "$NAME" --arg v "$VALUE" '.env = ((.env // {}) + {($k): $v})' "$S" > "$T" && mv "$T" "$S"
-echo "OK: $NAME записан (длина ${#VALUE})"
+# 1) прочитать значение из файла и записать в Связку (значение не печатается)
+jq -r --arg k "$NAME" '.env[$k] // ""' "$S" \
+  | bash "${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh" --set "$NAME"
+# 2) убедиться, что Связка отдаёт его, и только тогда чистить файл
+if bash "${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh" --which "$NAME" | grep -q 'keychain generic'; then
+  T=$(mktemp)
+  jq --arg k "$NAME" 'if .env then .env |= del(.[$k]) else . end' "$S" > "$T" && mv "$T" "$S"
+  echo "MOVED: $NAME → Связка ключей, из settings.json удалён"
+else
+  echo "SKIP: $NAME не подтвердился в Связке — settings.json НЕ тронут"
+fi
 ```
 
-Остальной `settings.json` сохраняется как есть — `jq` переписывает только ключ внутри `.env`.
+**Только `jq` с временным файлом, никогда `Edit` по живому `settings.json`** — файл может
+одновременно писаться самим Claude Code, и ручная правка затрёт чужие изменения. Порядок
+«сначала записать в Связку, проверить, потом удалить из файла» обязателен: иначе сбой записи
+оставит пользователя без ключа.
 
-После каждой записи печатай ровно `OK: <ИМЯ> записан (длина N)`. Значение — никогда.
+Ключи класса A из `settings.json → env` переносить **не нужно и нечем**: их пишет Claude Code,
+путь — шаг 3.
 
-## Шаг 5 — homes верификаторов и симлинки
+## Шаг 6 — homes верификаторов и симлинки
 
 ```bash
 HOMES="${CLAUDE_PLUGIN_DATA}/verif-homes"
@@ -133,50 +206,56 @@ ls -l "$HOMES"/*/auth.json 2>&1
 Битый симлинк (`ls` ругается «No such file») означает, что соответствующий CLI ещё не
 логинился. Скажи об этом прямо: `codex login` / `grok` — и повтори шаг.
 
-## Шаг 6 — smoke-проверка
+## Шаг 7 — smoke-проверка
 
-Один Bash-вызов, **HTTP-код и только он** (тело ответа может содержать эхо ключа):
+Один Bash-вызов, **HTTP-код и только он** (тело ответа может содержать эхо ключа). Ключи
+приходят прелюдом из Связки — в командной строке `curl` подставляется уже переменная:
 
 ```bash
-S="$HOME/.claude/settings.json"
-g(){ jq -r --arg k "$1" '.env[$k] // ""' "$S"; }
-PM=$(g PUBMED_API_KEY); PME=$(g PUBMED_EMAIL); S2=$(g SEMANTIC_SCHOLAR_API_KEY)
-OA=$(g OPENALEX_API_KEY); OAM=$(g OPENALEX_MAILTO); CR=$(g CROSSREF_MAILTO); UP=$(g UNPAYWALL_EMAIL)
+SECRET="${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh"
+eval "$(bash "$SECRET" --export PUBMED_API_KEY PUBMED_EMAIL SEMANTIC_SCHOLAR_API_KEY \
+        OPENALEX_API_KEY OPENALEX_MAILTO CROSSREF_MAILTO UNPAYWALL_EMAIL \
+        YC_SEARCH_API_KEY GOOGLE_PLACES_API_KEY 2>/dev/null)"
 p(){ printf '%-18s %s (HTTP %s)\n' "$1" "$([ "$3" = 200 ] && echo PASS || echo FAIL)" "$3"; }
 
 p PubMed "" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 \
-  "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=aspirin&retmax=1&retmode=json&api_key=${PM}&tool=search-paper&email=${PME}")"
+  "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=aspirin&retmax=1&retmode=json&api_key=${PUBMED_API_KEY:-}&tool=search-paper&email=${PUBMED_EMAIL:-}")"
 p "Semantic Scholar" "" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 \
-  -H "x-api-key: ${S2}" 'https://api.semanticscholar.org/graph/v1/paper/search?query=aspirin&limit=1')"
+  -H "x-api-key: ${SEMANTIC_SCHOLAR_API_KEY:-}" 'https://api.semanticscholar.org/graph/v1/paper/search?query=aspirin&limit=1')"
 p OpenAlex "" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 \
-  -H "Authorization: Bearer ${OA}" "https://api.openalex.org/works?search=aspirin&per-page=1&mailto=${OAM}")"
+  -H "Authorization: Bearer ${OPENALEX_API_KEY:-}" "https://api.openalex.org/works?search=aspirin&per-page=1&mailto=${OPENALEX_MAILTO:-}")"
 p Crossref "" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 \
-  "https://api.crossref.org/works/10.1136/bmj.39493.646875.AE?mailto=${CR}")"
+  "https://api.crossref.org/works/10.1136/bmj.39493.646875.AE?mailto=${CROSSREF_MAILTO:-}")"
 p Unpaywall "" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 \
-  "https://api.unpaywall.org/v2/10.1136/bmj.39493.646875.AE?email=${UP}")"
+  "https://api.unpaywall.org/v2/10.1136/bmj.39493.646875.AE?email=${UNPAYWALL_EMAIL:-}")"
 p "Europe PMC" "" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 \
   'https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=aspirin&format=json&pageSize=1')"
 
 echo "---"
-# Яндекс: только --dry-run (0 ₽, живого вызова нет). Ключ проверяется отдельно — по наличию в env.
-YC=$(g YC_SEARCH_API_KEY)
+# Brave: живой вызов через websearch.py — он сам резолвит ключ по стандарту (env → Связка).
+if python3 "${CLAUDE_PLUGIN_ROOT}/scripts/websearch.py" brave "canary" --tag other -n 1 --out urls >/dev/null 2>&1; then
+  echo "Brave (websearch) PASS"
+else
+  echo "Brave (websearch) FAIL — проверь BRAVE_API_KEY шагом 3 (402/403 = биллинг тарифа Search)"
+fi
+
+# Яндекс: только --dry-run (0 ₽, живого вызова нет). Ключ проверяется отдельно — по резолву.
 if bash "${CLAUDE_PLUGIN_ROOT}/scripts/yandex-search.sh" "тест" --dry-run >/dev/null 2>&1; then
-  [ -n "$YC" ] && echo "yandex-search PASS (скрипт ок, ключ задан)" \
-               || echo "yandex-search SKIP (скрипт ок, YC_SEARCH_API_KEY не задан — канал yandex выключен)"
+  [ -n "${YC_SEARCH_API_KEY:-}" ] && echo "yandex-search PASS (скрипт ок, ключ найден)" \
+                                  || echo "yandex-search SKIP (скрипт ок, YC_SEARCH_API_KEY нет — канал yandex выключен)"
 else
   echo "yandex-search FAIL (скрипт не отработал --dry-run)"
 fi
 command -v codex >/dev/null && echo "codex CLI     PASS" || echo "codex CLI     FAIL (нет в PATH)"
 command -v grok  >/dev/null || [ -x "$HOME/.grok/bin/grok" ] && echo "grok CLI      PASS" || echo "grok CLI      FAIL (нет в PATH)"
 command -v uv    >/dev/null && echo "uv (substack/yt) PASS" || echo "uv (substack/yt) FAIL — brew install uv"
-command -v jq    >/dev/null && echo "jq (hn/places)   PASS" || echo "jq (hn/places)   FAIL — brew install jq"
+command -v jq    >/dev/null && echo "jq (secret/hn/places) PASS" || echo "jq (secret/hn/places) FAIL — brew install jq"
 command -v pdftotext >/dev/null && echo "pdftotext     PASS" || echo "pdftotext     FAIL — brew install poppler"
 command -v yt-dlp >/dev/null && echo "yt-dlp (опц.) PASS" || echo "yt-dlp (опц.) SKIP — фоллбэк транскриптов недоступен"
 
 # Places: живой вызов НЕ делаем (платный) — только гейт по ключу.
-GP=$(g GOOGLE_PLACES_API_KEY)
-[ -n "$GP" ] && echo "places-fetch  PASS (ключ задан; бюджет-кап поставлен?)" \
-             || echo "places-fetch  SKIP (GOOGLE_PLACES_API_KEY не задан — place-слой идёт через Brave Place)"
+[ -n "${GOOGLE_PLACES_API_KEY:-}" ] && echo "places-fetch  PASS (ключ найден; бюджет-кап поставлен?)" \
+                                    || echo "places-fetch  SKIP (ключа нет — place-слой идёт через Brave Place)"
 
 # Свои фетчеры каналов hackernews / substack / telegram / youtube (сеть, 0 ₽).
 R="${CLAUDE_PLUGIN_ROOT}/scripts"
@@ -191,20 +270,23 @@ bash "$R/tg-preview.sh" durov >/dev/null 2>&1 && echo "tg-preview    PASS" || ec
 
 | Что видно | Причина | Что делать |
 |---|---|---|
-| HTTP 401 / 403 | ключ неверный или пустой | перезаписать значение шагом 4 |
+| HTTP 401 / 403 | ключ неверный или пустой | перезаписать значение шагом 4 (класс B) или шагом 3 (класс A) |
 | HTTP 429 | лимит вежливого пула | ключ рабочий; повторить через минуту |
 | HTTP 000 | нет сети или таймаут | проверить соединение |
 | PubMed FAIL, остальные PASS | `PUBMED_EMAIL` не совпадает с NCBI-профилем | привести почту к той, что в профиле NCBI |
-| Всё FAIL после свежей записи | сессия ещё не перечитала `env` | **перезапустить Claude Code** и прогнать `--check` |
+| Всё FAIL, а `--list` показывает ключи | прелюд `--export` не отработал | проверить `jq` в PATH и `bash "$SECRET" --which <KEY>` |
+| Класс A «не найден», хотя вводился | окно доступа к Связке отклонено | повторить и нажать «Разрешить всегда» |
+| MCP-серверы красные в `/mcp` после ввода | сессия ещё не подняла серверы | **перезапустить Claude Code** |
 
-## Шаг 7 — финал
+## Шаг 8 — финал
 
 Печатай ровно это:
 
 1. Таблицу PASS/FAIL.
-2. Строку: «`env` из `settings.json` применяется на старте сессии — **перезапусти Claude Code**,
-   иначе протоколы всё ещё увидят старые (или пустые) значения».
+2. Строку: «Класс B (научные ключи, Exa, Yandex, Places) читается сразу. Класс A
+   (`BRAVE_API_KEY`, `FIRECRAWL_API_KEY`, `REDDITAPIS_KEY`, `YOUTUBE_API_KEY`) поднимает
+   MCP-серверы на старте сессии — **перезапусти Claude Code**, если только что их вводил».
 3. Что дальше: `/jadlis-research:search` любым вопросом — если ответ пришёл со ссылками,
-   Brave подключён и батч 4 можно закрывать боевыми прогонами.
+   Brave подключён; `/jadlis-research:verif --file <свой план>` — первый боевой прогон.
 
 Значения ключей в финале не показывай — ни целиком, ни хвостом, ни первыми символами.
