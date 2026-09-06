@@ -22,6 +22,17 @@ argument-hint: "[--check — только проверка, без записи]
 (4) `.credentials.json`, (5) `settings.json → env` — legacy-рельса, которую этот скилл предлагает
 свернуть (шаг 5).
 
+Как это лежит в Связке (стандарт B′, 06.09.2026):
+- **Класс A** — Claude Code кладёт значения в Keychain-запись `Claude Code-credentials` (для профилей
+  с `CLAUDE_CONFIG_DIR` — `Claude Code-credentials-<hash>`) как JSON `pluginSecrets["<plugin>@<marketplace>"].KEY`.
+  Посмотреть из Bash (структуру, не значения): `security find-generic-password -s "Claude Code-credentials" -w | jq`.
+- **Класс B** — generic password: service `jadlis-research`, account = имя ключа; пишет этот скилл
+  (`secret.sh --set`, значение на stdin, под капотом `security add-generic-password -U -T /usr/bin/security`).
+
+**Почему Связка, а не файлы:** `settings.json → env` — открытый текст с правами 644, уезжает в бэкапы;
+`~/.zshenv` не виден MCP-серверам десктопного приложения; 1Password есть не у всех. Доки Claude Code
+пишут «~2 КБ на блоб Keychain» — на живом профиле блоб 10 КБ читается штатно.
+
 > [!warning] Значения ключей не печатать
 > Ни в ответе пользователю, ни в эхо Bash, ни в сообщении об ошибке. Максимум — имя
 > переменной и длина значения. Один вывод ключа в транскрипт = ключ скомпрометирован.
@@ -48,6 +59,15 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh" --list
 - **есть, источник `keychain generic` или `pluginSecrets`** — по стандарту, трогать не надо;
 - **есть, источник `settings.json env`** — legacy, предложить перенос на шаге 5;
 - **НЕТ** — недостающие, шаги 2–4.
+
+> [!warning] «Ключа нет» — проверять по всем рельсам, иначе ложный негатив
+> Legacy-рельса владельца жива, и env имеет приоритет. Наблюдение 22.07.2026: проверка по одному
+> `~/.zshenv` дала ложный негатив — часть ключей живёт в env-блоке `~/.claude/settings.json`
+> (пример: `TRUSTMRR_API_KEY`, ключ «Claude» с 26.05.2026; план считал сервис незарегистрированным).
+> Env-блок инжектится в каждую сессию, но grep по dotfiles его не покрывает, и ключ мог быть создан
+> в другой сессии. Полный чек = `env | grep NAME` (живое окружение) + `jq '.env | keys' ~/.claude/settings.json`
+> + `grep ~/.zshenv` + Связка (generic `jadlis-research` и `pluginSecrets`) — это и делает `secret.sh --list`.
+> Плюс сверить «1/N keys» в кабинете сервиса: существующий ключ там часто нельзя показать повторно.
 
 Разделение на обязательные и опциональные:
 
