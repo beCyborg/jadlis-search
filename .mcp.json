@@ -14,7 +14,7 @@
     },
     "reddit": {
       "type": "http",
-      "url": "https://reddit-research-mcp.fastmcp.app/mcp"
+      "url": "https://mcp.dialog.tools/mcp"
     },
     "reddit-alt": {
       "type": "stdio",
