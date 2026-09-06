@@ -53,7 +53,7 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh" --list
 
 | Обязательные | Опциональные (модули включаются, только если ключ есть) |
 |---|---|
-| `BRAVE_API_KEY`, `FIRECRAWL_API_KEY` (класс A) · `PUBMED_API_KEY`, `PUBMED_EMAIL`, `SEMANTIC_SCHOLAR_API_KEY`, `OPENALEX_API_KEY`, `OPENALEX_MAILTO`, `CROSSREF_MAILTO`, `UNPAYWALL_EMAIL` (класс B) | `REDDITAPIS_KEY`, `YOUTUBE_API_KEY`, `EXA_API_KEY`, `CORE_API_KEY`, `SCITE_API_KEY`, `CONSENSUS_API_KEY`, `YC_SEARCH_API_KEY`, `GOOGLE_PLACES_API_KEY`, `TAVILY_API_KEY`, `SERPER_API_KEY`, `WYKOP_API_KEY` |
+| `BRAVE_API_KEY`, `FIRECRAWL_API_KEY` (класс A) · `PUBMED_API_KEY`, `PUBMED_EMAIL`, `SEMANTIC_SCHOLAR_API_KEY`, `OPENALEX_API_KEY`, `OPENALEX_MAILTO`, `CROSSREF_MAILTO`, `UNPAYWALL_EMAIL` (класс B) | `REDDITAPIS_KEY`, `YOUTUBE_API_KEY`, `EXA_API_KEY`, `CORE_API_KEY`, `SCITE_API_KEY`, `CONSENSUS_API_KEY`, `YC_SEARCH_API_KEY`, `GOOGLE_PLACES_API_KEY`, `TAVILY_API_KEY`, `SERPER_API_KEY`, `WYKOP_API_KEY`, `TWITTERAPI_IO_KEY` |
 
 Нужен только `/jadlis-research:verif` — хватит `BRAVE_API_KEY` и `FIRECRAWL_API_KEY`; научные ключи
 можно пропустить и вернуться к ним перед первым `search-paper`.
@@ -90,6 +90,7 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh" --list
 | `REDDITAPIS_KEY` | A | https://redditapis.com (резервный Reddit-MCP, ~$0.002 за вызов) |
 | `YOUTUBE_API_KEY` | A | https://console.cloud.google.com → включить **YouTube Data API v3** → Credentials → API key |
 | `EXA_API_KEY` | B | https://dashboard.exa.ai → API Keys (семантический слой `/search`, $0.007/поиск) |
+| `TWITTERAPI_IO_KEY` | B | https://twitterapi.io → Dashboard → API key (слой реплаев/био/трендов Twitter-канала и keyword-фолбэк при мёртвом Grok; $0.15 за 1K твитов, минимальное пополнение снимает лимит 1 запрос/5 с) |
 | `PUBMED_API_KEY`, `PUBMED_EMAIL` | B | https://www.ncbi.nlm.nih.gov/account/settings/ → API Key Management |
 | `SEMANTIC_SCHOLAR_API_KEY` | B | https://www.semanticscholar.org/product/api |
 | `OPENALEX_API_KEY`, `OPENALEX_MAILTO` | B | https://openalex.org (freemium dashboard) |
