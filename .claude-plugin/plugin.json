@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "search",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "displayName": "Jadlis — поиск и ключи ресерч-стека",
   "description": "Поиск в вебе (Brave — по словам, Exa — по смыслу) и страницы через Firecrawl, плюс пять MCP-серверов и единая точка ключей (scripts/secret.sh → Связка ключей macOS). База для плагинов research и science-research.",
   "author": {

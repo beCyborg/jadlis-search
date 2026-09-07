@@ -1,6 +1,6 @@
 ---
 name: keys
-description: "Ключи ресерч-стека по единому стандарту: всё живёт в Связке ключей macOS, а не в файлах. Показывает, что уже заведено (имена и длины, без значений), принимает недостающие значения по одному и пишет их через scripts/secret.sh, переносит legacy-ключи из settings.json в Связку, разворачивает рабочие homes верификаторов и гоняет smoke-проверку по каждому источнику с таблицей PASS/FAIL.\nTRIGGER when: user says \"настрой ключи\", \"ключи ресерча\", \"проверь ключи\", \"keys\", \"/search:keys\", \"research keys\", \"куда положить ключ\", \"почему PubMed не отвечает\", \"смоук источников\", or has just installed search and needs configuration.\nDO NOT TRIGGER when: обычный поиск (use /search), верификация плана (use /verif)."
+description: "Ключи ресерч-стека по единому стандарту: всё живёт в Связке ключей macOS, а не в файлах. Показывает, что уже заведено (имена и длины, без значений), принимает недостающие значения по одному и пишет их через scripts/secret.sh, переносит legacy-ключи из settings.json в Связку и гоняет smoke-проверку по каждому источнику с таблицей PASS/FAIL.\nTRIGGER when: user says \"настрой ключи\", \"ключи ресерча\", \"проверь ключи\", \"keys\", \"/search:keys\", \"research keys\", \"куда положить ключ\", \"почему PubMed не отвечает\", \"смоук источников\", or has just installed search and needs configuration.\nDO NOT TRIGGER when: обычный поиск (use /search), верификация плана (use /verif)."
 allowed-tools: Read, Edit, Write, Bash, AskUserQuestion
 argument-hint: "[--check — только проверка, без записи]"
 ---
@@ -43,8 +43,6 @@ argument-hint: "[--check — только проверка, без записи]
 
 ```
 SECRET     = ${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh
-HOMES      = ${CLAUDE_PLUGIN_DATA}/verif-homes
-TEMPLATES  = ${CLAUDE_PLUGIN_ROOT}/assets/verif-homes
 ```
 
 ## Шаг 1 — что уже есть
@@ -208,26 +206,7 @@ fi
 Ключи класса A из `settings.json → env` переносить **не нужно и нечем**: их пишет Claude Code,
 путь — шаг 3.
 
-## Шаг 6 — homes верификаторов и симлинки
-
-```bash
-HOMES="${CLAUDE_PLUGIN_DATA}/verif-homes"
-TEMPLATES="${CLAUDE_PLUGIN_ROOT}/assets/verif-homes"
-mkdir -p "$HOMES/codex-home" "$HOMES/grok-home"
-for f in AGENTS.md config.toml; do
-  [ -e "$HOMES/codex-home/$f" ] || cp "$TEMPLATES/codex-home/$f" "$HOMES/codex-home/$f"
-  [ -e "$HOMES/grok-home/$f" ]  || cp "$TEMPLATES/grok-home/$f"  "$HOMES/grok-home/$f"
-done
-# auth.json — СИМЛИНКИ на твои логины, копий не делаем и в git они не попадают
-[ -e "$HOMES/codex-home/auth.json" ] || ln -s "$HOME/.codex/auth.json" "$HOMES/codex-home/auth.json"
-[ -e "$HOMES/grok-home/auth.json" ]  || ln -s "$HOME/.grok/auth.json"  "$HOMES/grok-home/auth.json"
-ls -l "$HOMES"/*/auth.json 2>&1
-```
-
-Битый симлинк (`ls` ругается «No such file») означает, что соответствующий CLI ещё не
-логинился. Скажи об этом прямо: `codex login` / `grok` — и повтори шаг.
-
-## Шаг 7 — smoke-проверка
+## Шаг 6 — smoke-проверка
 
 Один Bash-вызов, **HTTP-код и только он** (тело ответа может содержать эхо ключа). Ключи
 приходят прелюдом из Связки — в командной строке `curl` подставляется уже переменная:
@@ -299,7 +278,7 @@ bash "$R/tg-preview.sh" durov >/dev/null 2>&1 && echo "tg-preview    PASS" || ec
 | Класс A «не найден», хотя вводился | окно доступа к Связке отклонено | повторить и нажать «Разрешить всегда» |
 | MCP-серверы красные в `/mcp` после ввода | сессия ещё не подняла серверы | **перезапустить Claude Code** |
 
-## Шаг 8 — финал
+## Шаг 7 — финал
 
 Печатай ровно это:
 
