@@ -1,11 +1,11 @@
 ---
 name: keys
-description: "Ключи ресерч-стека по единому стандарту: всё живёт в Связке ключей macOS, а не в файлах. Показывает, что уже заведено (имена и длины, без значений), принимает недостающие значения по одному и пишет их через scripts/secret.sh, переносит legacy-ключи из settings.json в Связку, разворачивает рабочие homes верификаторов и гоняет smoke-проверку по каждому источнику с таблицей PASS/FAIL.\nTRIGGER when: user says \"настрой ключи\", \"ключи ресерча\", \"проверь ключи\", \"keys\", \"/jadlis-research:keys\", \"research keys\", \"куда положить ключ\", \"почему PubMed не отвечает\", \"смоук источников\", or has just installed jadlis-research and needs configuration.\nDO NOT TRIGGER when: обычный поиск (use /jadlis-research:search), верификация плана (use /jadlis-research:verif)."
+description: "Ключи ресерч-стека по единому стандарту: всё живёт в Связке ключей macOS, а не в файлах. Показывает, что уже заведено (имена и длины, без значений), принимает недостающие значения по одному и пишет их через scripts/secret.sh, переносит legacy-ключи из settings.json в Связку, разворачивает рабочие homes верификаторов и гоняет smoke-проверку по каждому источнику с таблицей PASS/FAIL.\nTRIGGER when: user says \"настрой ключи\", \"ключи ресерча\", \"проверь ключи\", \"keys\", \"/search:keys\", \"research keys\", \"куда положить ключ\", \"почему PubMed не отвечает\", \"смоук источников\", or has just installed search and needs configuration.\nDO NOT TRIGGER when: обычный поиск (use /search), верификация плана (use /verif)."
 allowed-tools: Read, Edit, Write, Bash, AskUserQuestion
 argument-hint: "[--check — только проверка, без записи]"
 ---
 
-# /jadlis-research:keys — ключи ресерч-стека и smoke-проверка
+# /search:keys — ключи ресерч-стека и smoke-проверка
 
 `$ARGUMENTS`
 
@@ -14,10 +14,10 @@ argument-hint: "[--check — только проверка, без записи]
 
 | Класс | Что за ключи | Кто пишет | Как читает |
 |---|---|---|---|
-| **A** — ключи MCP-серверов плагина | `BRAVE_API_KEY`, `FIRECRAWL_API_KEY`, `REDDITAPIS_KEY`, `YOUTUBE_API_KEY` | сам Claude Code: `/plugin configure jadlis-research@jadlis`, диалог при включении плагина или `claude plugin install … --config KEY=…` | MCP — через `${user_config.KEY}`; Bash — через `secret.sh` |
+| **A** — ключи MCP-серверов плагина | `BRAVE_API_KEY`, `FIRECRAWL_API_KEY`, `REDDITAPIS_KEY`, `YOUTUBE_API_KEY` | сам Claude Code: `/plugin configure search@jadlis`, диалог при включении плагина или `claude plugin install … --config KEY=…` | MCP — через `${user_config.KEY}`; Bash — через `secret.sh` |
 | **B** — ключи скриптов и `curl`-блоков | научные источники, Exa, Yandex, Places, контактные почты | этот скилл: `secret.sh --set KEY` (значение приходит на stdin) | `secret.sh KEY` или прелюд `eval "$(… --export …)"` |
 
-Порядок разрешения в `secret.sh`: (1) переменная окружения, (2) Keychain `jadlis-research`/`KEY`,
+Порядок разрешения в `secret.sh`: (1) переменная окружения, (2) Keychain `jadlis`/`KEY` (fallback `jadlis-research`),
 (3) `pluginSecrets` из блоба `Claude Code-credentials` (затем `Claude Code-credentials-*`),
 (4) `.credentials.json`, (5) `settings.json → env` — legacy-рельса, которую этот скилл предлагает
 свернуть (шаг 5).
@@ -26,7 +26,7 @@ argument-hint: "[--check — только проверка, без записи]
 - **Класс A** — Claude Code кладёт значения в Keychain-запись `Claude Code-credentials` (для профилей
   с `CLAUDE_CONFIG_DIR` — `Claude Code-credentials-<hash>`) как JSON `pluginSecrets["<plugin>@<marketplace>"].KEY`.
   Посмотреть из Bash (структуру, не значения): `security find-generic-password -s "Claude Code-credentials" -w | jq`.
-- **Класс B** — generic password: service `jadlis-research`, account = имя ключа; пишет этот скилл
+- **Класс B** — generic password: service `jadlis`, account = имя ключа; пишет этот скилл
   (`secret.sh --set`, значение на stdin, под капотом `security add-generic-password -U -T /usr/bin/security`).
 
 **Почему Связка, а не файлы:** `settings.json → env` — открытый текст с правами 644, уезжает в бэкапы;
@@ -66,7 +66,7 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh" --list
 > (пример: `TRUSTMRR_API_KEY`, ключ «Claude» с 26.05.2026; план считал сервис незарегистрированным).
 > Env-блок инжектится в каждую сессию, но grep по dotfiles его не покрывает, и ключ мог быть создан
 > в другой сессии. Полный чек = `env | grep NAME` (живое окружение) + `jq '.env | keys' ~/.claude/settings.json`
-> + `grep ~/.zshenv` + Связка (generic `jadlis-research` и `pluginSecrets`) — это и делает `secret.sh --list`.
+> + `grep ~/.zshenv` + Связка (generic `jadlis` и `pluginSecrets`) — это и делает `secret.sh --list`.
 > Плюс сверить «1/N keys» в кабинете сервиса: существующий ключ там часто нельзя показать повторно.
 
 Разделение на обязательные и опциональные:
@@ -75,10 +75,10 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh" --list
 |---|---|
 | `BRAVE_API_KEY`, `FIRECRAWL_API_KEY` (класс A) · `PUBMED_API_KEY`, `PUBMED_EMAIL`, `SEMANTIC_SCHOLAR_API_KEY`, `OPENALEX_API_KEY`, `OPENALEX_MAILTO`, `CROSSREF_MAILTO`, `UNPAYWALL_EMAIL` (класс B) | `REDDITAPIS_KEY`, `YOUTUBE_API_KEY`, `EXA_API_KEY`, `CORE_API_KEY`, `SCITE_API_KEY`, `CONSENSUS_API_KEY`, `YC_SEARCH_API_KEY`, `GOOGLE_PLACES_API_KEY`, `TAVILY_API_KEY`, `SERPER_API_KEY`, `WYKOP_API_KEY`, `TWITTERAPI_IO_KEY` |
 
-Нужен только `/jadlis-research:verif` — хватит `BRAVE_API_KEY` и `FIRECRAWL_API_KEY`; научные ключи
+Нужен только `/verif` — хватит `BRAVE_API_KEY` и `FIRECRAWL_API_KEY`; научные ключи
 можно пропустить и вернуться к ним перед первым `search-paper`.
 
-`YC_SEARCH_API_KEY` — только для opt-in канала `yandex` в `/jadlis-research:full-research`
+`YC_SEARCH_API_KEY` — только для opt-in канала `yandex` в `/research`
 (поиск по Рунету, платный ≈0,1–0,15 ₽/тема). Без него канал не предлагается и, если всё-таки
 выбран, деградирует (`exit 2`, `sourceQuality=LOW`) — остальной ресерч работает как обычно.
 
@@ -97,7 +97,7 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh" --list
 `secret.sh`, `hn-fetch.sh` и `places-fetch.sh`), `uv` (шебанг `substack-fetch.py` и
 `yt-transcript.py`), `pdftotext` (poppler, для `pdf-fetch.sh`), опц. `yt-dlp` (фоллбэк
 транскриптов), опц. `codex`/`grok` CLI (каналы `codexweb`/`grokweb` и верификаторы
-`/jadlis-research:verif`).
+`/verif`).
 
 ## Шаг 2 — где взять недостающее
 
@@ -141,12 +141,12 @@ done
 источник `settings.json env` — скажи пользователю ввести ключ самому, **одним из трёх способов**
 (значение вводит он, не ты):
 
-1. **`/plugin configure jadlis-research@jadlis`** прямо в чате Claude Code — основной путь:
+1. **`/plugin configure search@jadlis`** прямо в чате Claude Code — основной путь:
    диалог со всеми полями `userConfig`, sensitive-значения маскируются при вводе и уезжают
    в Связку ключей. Работает и на уже установленном плагине, и для смены ключа.
-2. Выключить и снова включить плагин (`claude plugin disable/enable jadlis-research`) — при
+2. Выключить и снова включить плагин (`claude plugin disable/enable search`) — при
    включении Claude Code спросит недостающие поля тем же диалогом.
-3. Из своего терминала: `claude plugin install jadlis-research@jadlis --config BRAVE_API_KEY=…`
+3. Из своего терминала: `claude plugin install search@jadlis --config BRAVE_API_KEY=…`
    — годится для первой установки; значение видно в истории shell, потому это запасной путь.
 
 `--check` в аргументах → шаги 4 и 5 пропустить, идти сразу на шаг 6.
@@ -170,7 +170,7 @@ printf '%s' "$VALUE_FROM_USER" | bash "${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh" 
 Скрипт печатает ровно `OK: PUBMED_API_KEY записан в Keychain (длина N)`. Ничего сверх этого
 не добавляй: ни хвоста значения, ни первых символов.
 
-Под капотом это `security add-generic-password -U -s jadlis-research -a <KEY> -T /usr/bin/security -w`:
+Под капотом это `security add-generic-password -U -s jadlis -a <KEY> -T /usr/bin/security -w`:
 `-U` перезаписывает существующую запись, `-T /usr/bin/security` даёт доступ без диалога.
 
 Ключи класса B читаются **без перезапуска** Claude Code — `secret.sh` ходит в Связку в момент
@@ -307,7 +307,7 @@ bash "$R/tg-preview.sh" durov >/dev/null 2>&1 && echo "tg-preview    PASS" || ec
 2. Строку: «Класс B (научные ключи, Exa, Yandex, Places) читается сразу. Класс A
    (`BRAVE_API_KEY`, `FIRECRAWL_API_KEY`, `REDDITAPIS_KEY`, `YOUTUBE_API_KEY`) поднимает
    MCP-серверы на старте сессии — **перезапусти Claude Code**, если только что их вводил».
-3. Что дальше: `/jadlis-research:search` любым вопросом — если ответ пришёл со ссылками,
-   Brave подключён; `/jadlis-research:verif --file <свой план>` — первый боевой прогон.
+3. Что дальше: `/search` любым вопросом — если ответ пришёл со ссылками,
+   Brave подключён; `/verif --file <свой план>` — первый боевой прогон.
 
 Значения ключей в финале не показывай — ни целиком, ни хвостом, ни первыми символами.
