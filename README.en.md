@@ -107,7 +107,8 @@ And it does not cancel the providers' invoices — you pay them, directly.
 RedditAPIs and YouTube Data API: without them those servers show red in `/mcp`, and that is expected —
 Reddit falls back to the no-auth ladder, YouTube to site search and local transcripts. The Exa
 semantic layer is switched on by its own key, and `/jadlis-search:keys` sets that one up, not the install
-dialog. External binaries: `jq`, `uv`, `pdftotext` from poppler, optionally `yt-dlp`. macOS only. I do
+dialog. The optional `FIRECRAWL_API_URL` field in the install dialog is the Firecrawl API address;
+the default is the official one, change it only for your own proxy or key rotator. External binaries: `jq`, `uv`, `pdftotext` from poppler, optionally `yt-dlp`. macOS only. I do
 not restate other people's pricing: the invoices are theirs, check with them.
 
 No minimum versions are pinned: the plugin checks that the binaries are there — `jq`, `uv`,

@@ -10,7 +10,10 @@
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "firecrawl-mcp"],
-      "env": { "FIRECRAWL_API_KEY": "${user_config.FIRECRAWL_API_KEY}" }
+      "env": {
+        "FIRECRAWL_API_KEY": "${user_config.FIRECRAWL_API_KEY}",
+        "FIRECRAWL_API_URL": "${user_config.FIRECRAWL_API_URL}"
+      }
     },
     "reddit": {
       "type": "http",

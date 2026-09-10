@@ -5,6 +5,18 @@
 
 ## [Unreleased]
 
+## [2.1.0] — 2026-09-10
+
+### Для человека
+
+- В диалоге установки появилось необязательное поле `FIRECRAWL_API_URL` — адрес Firecrawl API. По умолчанию официальный `https://api.firecrawl.dev`, поведение у тех, кто ничего не вводит, не меняется. Нужно только тем, кто держит свой прокси или ротатор ключей Firecrawl: вводится при установке `--config FIRECRAWL_API_URL=http://…` или позже через `/plugin configure jadlis-search@jadlis`.
+
+### For agents
+
+- `.claude-plugin/plugin.json`: new `userConfig.FIRECRAWL_API_URL` (`type: string`, `required: false`, `sensitive: false`, `default: "https://api.firecrawl.dev"`); `version` → 2.1.0 (MINOR: additive, backwards compatible).
+- `.mcp.json`: `firecrawl.env.FIRECRAWL_API_URL = "${user_config.FIRECRAWL_API_URL}"` — `firecrawl-mcp` reads the base URL from that env var.
+- README RU/EN: one sentence about the field in «Границы, стоимость, обновление» / «Limits, cost, updating».
+
 ## [2.0.0] — 2026-09-10
 
 ### Для человека
