@@ -6,11 +6,11 @@
 текст страницы снимается отдельной лестницей, где Firecrawl стоит последним.
 
 ```
-claude plugin marketplace add https://github.com/beCyborg/jadlis-start.git
-claude plugin install search@jadlis
+claude plugin marketplace add https://github.com/beCyborg/jadlis-hub
+claude plugin install jadlis-search@jadlis
 ```
 
-Ключи Brave и Firecrawl обязательны, их спросят при установке; ставь `search` первым — `research` и
+Ключи Brave и Firecrawl обязательны, их спросят при установке; ставь `jadlis-search` первым — `research` и
 `science-research` тянут его как зависимость, но при авто-установке ключи не спрашиваются.
 
 ![Один вопрос уходит в два движка — по словам и по смыслу, — а текст страницы снимается отдельной лестницей](docs/img/hero-jadlis-search.webp)
@@ -26,7 +26,7 @@ claude plugin install search@jadlis
 |---|---|---|
 | **Каким способом ищешь.** Способ один за раз: либо точные слова, либо описание того, что нужно. | Ищет тем, что встроено внутрь, и выбрать движок нельзя. | Brave отвечает на слова и операторы, Exa — на описание страницы; движок выбирается по типу вопроса. |
 | **Что приходит вместо страницы.** Открываешь вкладки по одной и читаешь сам. | Приходит пересказ заголовка и первых абзацев — где кончилась страница и началась догадка, не видно. | Текст снимается лестницей: сначала бесплатные способы, Firecrawl — последним, PDF уходит на локальное извлечение. |
-| **Где лежат ключи.** В конфигах открытым текстом, а заодно в истории команд. | Ключей не просит — и к платным источникам не ходит. | Вводишь один раз, значение уезжает в Связку ключей macOS; сменить — `/plugin configure search@jadlis`. |
+| **Где лежат ключи.** В конфигах открытым текстом, а заодно в истории команд. | Ключей не просит — и к платным источникам не ходит. | Вводишь один раз, значение уезжает в Связку ключей macOS; сменить — `/plugin configure jadlis-search@jadlis`. |
 | **Что происходит, когда канал молчит.** Не видно, сломалось или так и задумано. | Отвечает так, будто ничего не отвалилось. | Без необязательного ключа канал деградирует описанным путём: Reddit уходит на no-auth-лестницу, YouTube — на поиск по сайту и локальные транскрипты. |
 | **Во что обошёлся прогон.** Счёт приходит в конце месяца, разбирать поздно. | Расход не показывается вовсе. | Каждый вызов пишет строку в лог стоимости, есть дневной софт-кап и сводка `report`. |
 
@@ -43,7 +43,7 @@ claude plugin install search@jadlis
 → ответ со ссылками и запись в лог стоимости.
 
 Поднимает плагин пять MCP-серверов: Brave, Firecrawl, два Reddit и YouTube. Ключи заводит и
-проверяет отдельный скилл `/search:keys` — показывает, что уже есть (имена и длины, не значения),
+проверяет отдельный скилл `/jadlis-search:keys` — показывает, что уже есть (имена и длины, не значения),
 принимает недостающие по одному и гоняет smoke-проверку по каждому источнику с таблицей PASS/FAIL.
 
 ## Установка и первый запуск
@@ -51,12 +51,12 @@ claude plugin install search@jadlis
 **а) Текст для вставки агенту.** Скопируй целиком в чат Claude Code:
 
 ```
-Ты — установщик. Поставь на этот Mac плагин search из маркетплейса jadlis.
+Ты — установщик. Поставь на этот Mac плагин jadlis-search из маркетплейса jadlis.
 Сначала скажи мне, macOS ли это: хранение ключей завязано на Связку ключей macOS.
 Выполни ровно эти команды, дословно, ничего не сокращая:
-1. claude plugin marketplace add https://github.com/beCyborg/jadlis-start.git
-2. claude plugin install search@jadlis
-3. claude plugin list — покажи мне строку про search и его версию.
+1. claude plugin marketplace add https://github.com/beCyborg/jadlis-hub
+2. claude plugin install jadlis-search@jadlis
+3. claude plugin list — покажи мне строку про jadlis-search и его версию.
 Плагин попросит два обязательных ключа, Brave и Firecrawl: значения ввожу я сам, ты их не
 печатаешь и никуда не копируешь — проверяй только «есть» или «нет».
 Перед каждой командой покажи её мне целиком и дождись «да». Сказал «нет» — не выполняй,
@@ -67,17 +67,17 @@ claude plugin install search@jadlis
 **б) Команды руками.**
 
 ```
-claude plugin marketplace add https://github.com/beCyborg/jadlis-start.git
-claude plugin install search@jadlis
+claude plugin marketplace add https://github.com/beCyborg/jadlis-hub
+claude plugin install jadlis-search@jadlis
 claude plugin list
 ```
 
 Первая команда ничего не ставит — она добавляет маркетплейс. Ставит только вторая, и снимается
-она одной строкой: `claude plugin uninstall search@jadlis --keep-data`.
+она одной строкой: `claude plugin uninstall jadlis-search@jadlis --keep-data`.
 
-Ключи можно передать прямо в установку — `claude plugin install search@jadlis --config
+Ключи можно передать прямо в установку — `claude plugin install jadlis-search@jadlis --config
 BRAVE_API_KEY=… --config FIRECRAWL_API_KEY=…`, — но тогда значение остаётся в истории shell.
-Основной путь — диалог `/plugin configure search@jadlis` прямо в чате: поля с ключами маскируются
+Основной путь — диалог `/plugin configure jadlis-search@jadlis` прямо в чате: поля с ключами маскируются
 при вводе, значения уезжают в Связку ключей macOS. Им же ключ и меняется потом — повторный
 `--config` на уже установленном плагине молча ничего не делает (проверено 07.09.2026).
 
@@ -87,7 +87,7 @@ BRAVE_API_KEY=… --config FIRECRAWL_API_KEY=…`, — но тогда знач�
 /search <вопрос>
 ```
 
-Не находится — сверь имя строкой `claude plugin list`. Ключи и проверка источников — `/search:keys`;
+Не находится — сверь имя строкой `claude plugin list`. Ключи и проверка источников — `/jadlis-search:keys`;
 после первого ввода ключей Claude Code нужно перезапустить, MCP-серверы поднимаются на старте
 сессии.
 
@@ -102,19 +102,21 @@ BRAVE_API_KEY=… --config FIRECRAWL_API_KEY=…`, — но тогда знач�
 **Что нужно.** Два обязательных платных ключа: Brave (тариф Search) и Firecrawl. Два
 необязательных, RedditAPIs и YouTube Data API: без них эти серверы горят красным в `/mcp`, и это
 ожидаемо — Reddit уходит на no-auth-лестницу, YouTube на поиск по сайту и локальные транскрипты.
-Семантический слой Exa включается своим ключом, и заводит его `/search:keys`, а не диалог
+Семантический слой Exa включается своим ключом, и заводит его `/jadlis-search:keys`, а не диалог
 установки. Внешние бинарники: `jq`, `uv`, `pdftotext` из poppler, опционально `yt-dlp`. Только
 macOS. Чужие тарифы не пересказываю: счета у поставщиков, смотри у них.
 
-[уточнить] — минимальные версии `jq`, `uv`, `pdftotext` и `yt-dlp` в репозитории не зафиксированы.
+Минимальные версии не зафиксированы: плагин проверяет, что бинарники есть — `jq`, `uv`,
+`pdftotext` из poppler (`brew install poppler`), опционально `yt-dlp`; проверено на текущих версиях
+из Homebrew на macOS.
 
 **Порядок расхода токенов.** Прогон лёгкий: один вопрос — один вызов движка, тяжёлые фан-ауты живут
 в `research` и `science-research`. Дороже прочего обходится снятие страниц целиком, поэтому лестница
 ставит Firecrawl последним, а PDF уводит на локальное извлечение. Каждый вызов пишет строку в лог
 стоимости, есть дневной софт-кап, а широкий фан-аут скилл сначала согласует с тобой.
 
-**Проверено там, где я работаю:** мой Mac, мои подписки, мои ключи. Где ещё это работает —
-[уточнить].
+**Проверено там, где я работаю:** мой Mac, мои подписки, мои ключи. Проверено только на macOS;
+на Linux должно работать с теми же бинарниками в PATH, Windows не проверялся.
 
 **Условия использования.** Лицензии нет: все права сохранены за автором. Читать и
 пользоваться лично можно. Коммерческое использование, переиздание и включение в свои
@@ -125,12 +127,12 @@ macOS. Чужие тарифы не пересказываю: счета у по
 
 ```
 claude plugin marketplace update jadlis
-claude plugin update search@jadlis
+claude plugin update jadlis-search@jadlis
 claude plugin list
 ```
 
 Переустановка, если что-то встало криво:
 
 ```
-claude plugin uninstall search@jadlis --keep-data && claude plugin install search@jadlis
+claude plugin uninstall jadlis-search@jadlis --keep-data && claude plugin install jadlis-search@jadlis
 ```

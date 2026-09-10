@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
-  "name": "search",
-  "version": "1.0.1",
+  "name": "jadlis-search",
+  "version": "2.0.0",
   "displayName": "Jadlis — поиск и ключи ресерч-стека",
   "description": "Поиск в вебе (Brave — по словам, Exa — по смыслу) и страницы через Firecrawl, плюс пять MCP-серверов и единая точка ключей (scripts/secret.sh → Связка ключей macOS). База для плагинов research и science-research.",
   "author": {
@@ -21,14 +21,14 @@
     "BRAVE_API_KEY": {
       "type": "string",
       "title": "Brave Search API Key",
-      "description": "Тариф Search. Завести: api-dashboard.search.brave.com. Значение уезжает в Связку ключей macOS; сменить позже — /plugin configure search@jadlis.",
+      "description": "Тариф Search. Завести: api-dashboard.search.brave.com. Значение уезжает в Связку ключей macOS; сменить позже — /plugin configure jadlis-search@jadlis.",
       "sensitive": true,
       "required": true
     },
     "FIRECRAWL_API_KEY": {
       "type": "string",
       "title": "Firecrawl API Key",
-      "description": "Формат fc-… Завести: firecrawl.dev/app/api-keys. Значение уезжает в Связку ключей macOS; сменить позже — /plugin configure search@jadlis.",
+      "description": "Формат fc-… Завести: firecrawl.dev/app/api-keys. Значение уезжает в Связку ключей macOS; сменить позже — /plugin configure jadlis-search@jadlis.",
       "sensitive": true,
       "required": true
     },

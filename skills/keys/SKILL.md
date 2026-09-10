@@ -1,11 +1,11 @@
 ---
 name: keys
-description: "Ключи ресерч-стека по единому стандарту: всё живёт в Связке ключей macOS, а не в файлах. Показывает, что уже заведено (имена и длины, без значений), принимает недостающие значения по одному и пишет их через scripts/secret.sh, переносит legacy-ключи из settings.json в Связку и гоняет smoke-проверку по каждому источнику с таблицей PASS/FAIL.\nTRIGGER when: user says \"настрой ключи\", \"ключи ресерча\", \"проверь ключи\", \"keys\", \"/search:keys\", \"research keys\", \"куда положить ключ\", \"почему PubMed не отвечает\", \"смоук источников\", or has just installed search and needs configuration.\nDO NOT TRIGGER when: обычный поиск (use /search), верификация плана (use /verif)."
+description: "Ключи ресерч-стека по единому стандарту: всё живёт в Связке ключей macOS, а не в файлах. Показывает, что уже заведено (имена и длины, без значений), принимает недостающие значения по одному и пишет их через scripts/secret.sh, переносит legacy-ключи из settings.json в Связку и гоняет smoke-проверку по каждому источнику с таблицей PASS/FAIL.\nTRIGGER when: user says \"настрой ключи\", \"ключи ресерча\", \"проверь ключи\", \"keys\", \"/jadlis-search:keys\", \"research keys\", \"куда положить ключ\", \"почему PubMed не отвечает\", \"смоук источников\", or has just installed jadlis-search and needs configuration.\nDO NOT TRIGGER when: обычный поиск (use /search), верификация плана (use /verif)."
 allowed-tools: Read, Edit, Write, Bash, AskUserQuestion
 argument-hint: "[--check — только проверка, без записи]"
 ---
 
-# /search:keys — ключи ресерч-стека и smoke-проверка
+# /jadlis-search:keys — ключи ресерч-стека и smoke-проверка
 
 `$ARGUMENTS`
 
@@ -14,7 +14,7 @@ argument-hint: "[--check — только проверка, без записи]
 
 | Класс | Что за ключи | Кто пишет | Как читает |
 |---|---|---|---|
-| **A** — ключи MCP-серверов плагина | `BRAVE_API_KEY`, `FIRECRAWL_API_KEY`, `REDDITAPIS_KEY`, `YOUTUBE_API_KEY` | сам Claude Code: `/plugin configure search@jadlis`, диалог при включении плагина или `claude plugin install … --config KEY=…` | MCP — через `${user_config.KEY}`; Bash — через `secret.sh` |
+| **A** — ключи MCP-серверов плагина | `BRAVE_API_KEY`, `FIRECRAWL_API_KEY`, `REDDITAPIS_KEY`, `YOUTUBE_API_KEY` | сам Claude Code: `/plugin configure jadlis-search@jadlis`, диалог при включении плагина или `claude plugin install … --config KEY=…` | MCP — через `${user_config.KEY}`; Bash — через `secret.sh` |
 | **B** — ключи скриптов и `curl`-блоков | научные источники, Exa, Yandex, Places, контактные почты | этот скилл: `secret.sh --set KEY` (значение приходит на stdin) | `secret.sh KEY` или прелюд `eval "$(… --export …)"` |
 
 Порядок разрешения в `secret.sh`: (1) переменная окружения, (2) Keychain `jadlis`/`KEY` (fallback `jadlis-research`),
@@ -139,12 +139,12 @@ done
 источник `settings.json env` — скажи пользователю ввести ключ самому, **одним из трёх способов**
 (значение вводит он, не ты):
 
-1. **`/plugin configure search@jadlis`** прямо в чате Claude Code — основной путь:
+1. **`/plugin configure jadlis-search@jadlis`** прямо в чате Claude Code — основной путь:
    диалог со всеми полями `userConfig`, sensitive-значения маскируются при вводе и уезжают
    в Связку ключей. Работает и на уже установленном плагине, и для смены ключа.
 2. Выключить и снова включить плагин (`claude plugin disable/enable search`) — при
    включении Claude Code спросит недостающие поля тем же диалогом.
-3. Из своего терминала: `claude plugin install search@jadlis --config BRAVE_API_KEY=…`
+3. Из своего терминала: `claude plugin install jadlis-search@jadlis --config BRAVE_API_KEY=…`
    — годится для первой установки; значение видно в истории shell, потому это запасной путь.
 
 `--check` в аргументах → шаги 4 и 5 пропустить, идти сразу на шаг 6.
