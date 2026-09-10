@@ -6,7 +6,7 @@ argument-hint: <query>
 
 # Web Search — Brave + Exa через `websearch.py`
 
-Два движка, один скрипт: `S=${CLAUDE_PLUGIN_ROOT}/scripts/websearch.py`. Ключи — `EXA_API_KEY`, `BRAVE_API_KEY`: скрипт резолвит их сам по стандарту плагина (env → Связка ключей macOS через `scripts/secret.sh`; заводит их `/search:keys`, Brave — ещё и `/plugin configure search@jadlis`). Каждый вызов пишет `[cost]` в stderr и строку в лог `$WEBSEARCH_LOG` (дефолт — `telemetry/search-ab/events.jsonl` в конфиг-дире Claude); лог остаётся источником для `report` и телеметрии стоимости.
+Два движка, один скрипт: `S=${CLAUDE_PLUGIN_ROOT}/scripts/websearch.py`. Ключи — `EXA_API_KEY`, `BRAVE_API_KEY`: скрипт резолвит их сам по стандарту плагина (env → Связка ключей macOS через `scripts/secret.sh`; заводит их `/jadlis-search:keys`, Brave — ещё и `/plugin configure jadlis-search@jadlis`). Каждый вызов пишет `[cost]` в stderr и строку в лог `$WEBSEARCH_LOG` (дефолт — `telemetry/search-ab/events.jsonl` в конфиг-дире Claude); лог остаётся источником для `report` и телеметрии стоимости.
 
 Перед Фазой 1 прочитать `references/gotchas.md` — ловушки Exa/Firecrawl (кап, crawl, json-формат, прайсы).
 
@@ -25,10 +25,10 @@ argument-hint: <query>
 | Люди / компании / научные публикации / новости по типу | `python3 $S exa "…" --tag people\|company\|research\|news --category people\|company\|publication\|news` |
 | Ограничить домены / даты | Exa: `--include-domains a.com,b.org` `--exclude-domains …` `--start 2026-01-01 --end …`; Brave: `--goggles $'$discard\n$site=vc.ru'` `--freshness pd\|pw\|pm\|py` |
 | Оба движка — **только по явной просьбе** («сравни движки», «через оба») | `python3 $S both "<q>" --tag … [--query-exa "<описание страницы>"]` → синтез → `verdict` (опционально) |
-| Одна страница целиком / подстраницы / свежий краул | `python3 $S contents <url…> --full [--text\|--highlights\|--summary] [--subpages 5 --subpage-target api,pricing] [--max-age-hours 0]` (~$0.001/стр.; **`--full` обязателен для снапшотов** — дефолт `--max-chars 8000` молча режет страницу) → фоллбэк `mcp__plugin_search_firecrawl__firecrawl_scrape` |
+| Одна страница целиком / подстраницы / свежий краул | `python3 $S contents <url…> --full [--text\|--highlights\|--summary] [--subpages 5 --subpage-target api,pricing] [--max-age-hours 0]` (~$0.001/стр.; **`--full` обязателен для снапшотов** — дефолт `--max-chars 8000` молча режет страницу) → фоллбэк `mcp__plugin_jadlis-search_firecrawl__firecrawl_scrape` |
 | Код / API / библиотека | Context7 → `python3 $S context "<q>" [--tokens 5000]` (Exa Code, $0.007) |
 | **Страница = PDF** | `bash "${CLAUDE_PLUGIN_ROOT}/scripts/pdf-fetch.sh" "<url>"` → `Read` (0 кр; Firecrawl биллит 1 кр/стр, хук deny-ит) |
-| Новости / картинки / видео | `mcp__plugin_search_brave-search__brave_news_search` / `brave_image_search` / `brave_video_search` (или `exa --category news`) |
+| Новости / картинки / видео | `mcp__plugin_jadlis-search_brave-search__brave_news_search` / `brave_image_search` / `brave_video_search` (или `exa --category news`) |
 | Контент из многих страниц одним вызовом (Brave LLM Context) | `python3 $S brave "<q>" --tag … --mode context` |
 | **Рунет глубже**, региональная выдача, операторы Яндекса | канал `yandex` в `/research` (ключ `YC_SEARCH_API_KEY`) или локальный скилл Яндекс-поиска, если установлен |
 | Многошаговый агентный поиск / список компаний / обогащение | `mcp__exa__agent_run` — $0.025–$1.00 за run, **только по явной просьбе** |
