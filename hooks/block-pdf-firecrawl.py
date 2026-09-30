@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# PreToolUse: deny Firecrawl PDF-скрапа (1 кредит/страница) → редирект на pdf-fetch.sh;
-# deny x.com/twitter.com (30 кредитов за AI-обработанный пересказ, дословного тела нет).
+# PreToolUse: deny Firecrawl PDF scrapes (1 credit/page) -> redirect to pdf-fetch.sh;
+# deny x.com/twitter.com (30 credits for an AI summary, no verbatim body).
 import sys, json, re, os
 from urllib.parse import urlsplit
 try:
@@ -9,6 +9,7 @@ except Exception:
     sys.exit(0)
 ROOT = os.environ.get("CLAUDE_PLUGIN_ROOT", "")
 PDF_FETCH = (ROOT.rstrip("/") + "/scripts/pdf-fetch.sh") if ROOT else "${CLAUDE_PLUGIN_ROOT}/scripts/pdf-fetch.sh"
+TWITTERAPI = (ROOT.rstrip("/") + "/scripts/twitterapi.sh") if ROOT else "${CLAUDE_PLUGIN_ROOT}/scripts/twitterapi.sh"
 ti = d.get("tool_input", {}) or {}
 PDF = re.compile(r'(?i)(\.pdf($|[?#])|/TXT/PDF/|coredownload.*pdf|[?&]format=pdf)')
 X_HOSTS = ("x.com", "twitter.com", "mobile.twitter.com")
@@ -28,15 +29,15 @@ def deny(reason):
         "permissionDecisionReason": reason}}, ensure_ascii=False))
     sys.exit(0)
 if any(x_host(u) for u in urls):
-    deny("x.com/twitter.com: Firecrawl отдаёт AI-обработанный пересказ за ~30 кредитов, дословного тела страницы нет — "
-         "снапшот из него гейт не закроет. Дословный текст — `defuddle parse <url> --md` или `curl https://r.jina.ai/<url>`; "
-         "твиты/треды — канал twitter (Grok x_*).")
+    deny("x.com/twitter.com: Firecrawl returns an AI-written summary for ~30 credits, not the verbatim page body — "
+         "a snapshot from it will not satisfy a quote gate. Verbatim text: `defuddle parse <url> --md` or "
+         "`curl https://r.jina.ai/<url>`; tweets and threads: bash " + TWITTERAPI + " (TwitterAPI.io REST).")
 if any(PDF.search(u) for u in urls):
     parsers = ti.get("parsers") or []
     maxp = (ti.get("pdfOptions") or {}).get("maxPages")
     capped = ("pdf" in parsers) and isinstance(maxp, int) and 1 <= maxp <= 20
     if not capped:
-        deny("PDF-URL: Firecrawl биллит 1 кредит/страница. Извлеки локально — "
-             "bash " + PDF_FETCH + " <url> → Read .txt (0 кредитов). "
-             "Если Firecrawl реально нужен как загрузчик: parsers:[\"pdf\"] И pdfOptions.maxPages ≤ 20.")
+        deny("PDF URL: Firecrawl bills 1 credit per page. Extract locally instead — "
+             "bash " + PDF_FETCH + " <url> then Read the .txt (0 credits). "
+             "If Firecrawl really is needed as the fetcher: parsers:[\"pdf\"] AND pdfOptions.maxPages <= 20.")
 sys.exit(0)

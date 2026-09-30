@@ -5,6 +5,17 @@
 
 ## [Unreleased]
 
+## [2.1.1] — 2026-09-30
+
+### Для человека
+
+- Хук, который не пускает Firecrawl на x.com/twitter.com, больше не отсылает к каналу Grok (Grok отключён с 14.09.2026): для твитов и тредов он теперь предлагает `scripts/twitterapi.sh` (TwitterAPI.io). Тексты отказов хука — на английском.
+
+### For agents
+
+- `hooks/block-pdf-firecrawl.py`: deny reasons rewritten in English; the x.com/twitter.com reason now points to `${CLAUDE_PLUGIN_ROOT}/scripts/twitterapi.sh` (new `TWITTERAPI` constant, resolved like `PDF_FETCH`) instead of «канал twitter (Grok x_*)». Matching logic unchanged.
+- `.claude-plugin/plugin.json`: `version` → 2.1.1 (PATCH: message text only).
+
 ## [2.1.0] — 2026-09-10
 
 ### Для человека
