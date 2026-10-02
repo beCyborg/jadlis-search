@@ -2,17 +2,31 @@
   "mcpServers": {
     "brave-search": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@brave/brave-search-mcp-server"],
-      "env": { "BRAVE_API_KEY": "${user_config.BRAVE_API_KEY}" }
+      "command": "${CLAUDE_PLUGIN_ROOT}/scripts/mcp-run",
+      "args": [
+        "npx",
+        "-y",
+        "@brave/brave-search-mcp-server"
+      ],
+      "env": {
+        "BRAVE_API_KEY": "${user_config.BRAVE_API_KEY}",
+        "JADLIS_MCP_URL": "${user_config.brave_mcp_url}",
+        "JADLIS_MCP_BEARER": "${user_config.shared_mcp_token}"
+      }
     },
     "firecrawl": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "firecrawl-mcp"],
+      "command": "${CLAUDE_PLUGIN_ROOT}/scripts/mcp-run",
+      "args": [
+        "npx",
+        "-y",
+        "firecrawl-mcp"
+      ],
       "env": {
         "FIRECRAWL_API_KEY": "${user_config.FIRECRAWL_API_KEY}",
-        "FIRECRAWL_API_URL": "${user_config.FIRECRAWL_API_URL}"
+        "FIRECRAWL_API_URL": "${user_config.FIRECRAWL_API_URL}",
+        "JADLIS_MCP_URL": "${user_config.firecrawl_mcp_url}",
+        "JADLIS_MCP_BEARER": "${user_config.shared_mcp_token}"
       }
     },
     "reddit": {
@@ -21,15 +35,31 @@
     },
     "reddit-alt": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "redditapis-mcp@latest"],
-      "env": { "REDDITAPIS_KEY": "${user_config.REDDITAPIS_KEY}" }
+      "command": "${CLAUDE_PLUGIN_ROOT}/scripts/mcp-run",
+      "args": [
+        "npx",
+        "-y",
+        "redditapis-mcp@latest"
+      ],
+      "env": {
+        "REDDITAPIS_KEY": "${user_config.REDDITAPIS_KEY}",
+        "JADLIS_MCP_URL": "${user_config.reddit_alt_mcp_url}",
+        "JADLIS_MCP_BEARER": "${user_config.shared_mcp_token}"
+      }
     },
     "youtube": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "youtube-data-mcp-server"],
-      "env": { "YOUTUBE_API_KEY": "${user_config.YOUTUBE_API_KEY}" }
+      "command": "${CLAUDE_PLUGIN_ROOT}/scripts/mcp-run",
+      "args": [
+        "npx",
+        "-y",
+        "youtube-data-mcp-server"
+      ],
+      "env": {
+        "YOUTUBE_API_KEY": "${user_config.YOUTUBE_API_KEY}",
+        "JADLIS_MCP_URL": "${user_config.youtube_mcp_url}",
+        "JADLIS_MCP_BEARER": "${user_config.shared_mcp_token}"
+      }
     }
   }
 }

@@ -5,6 +5,23 @@
 
 ## [Unreleased]
 
+## [2.2.0] — 2026-10-02 — общий MCP-сервер вместо копии в каждой сессии / shared MCP server instead of a copy per session
+
+### Для человека
+
+- Можно не запускать четыре MCP-сервера (Brave, Firecrawl, Reddit redditapis, YouTube) заново в каждой сессии Claude Code: в `/plugin configure jadlis-search@jadlis` появились поля «общий MCP-сервер» — адрес одного сервера на машину или на твой сервер. Сессия подключается к нему через лёгкий переходник (~17 МБ против ~290 МБ у полного сервера на сессию, замер 02.10.2026).
+- Поля пустые — всё работает как раньше, ничего делать не нужно.
+- Для серверов с авторизацией есть поле токена; оно уезжает в Связку ключей.
+
+### For agents
+
+- Added: `scripts/mcp-run` (POSIX sh launcher; empty `JADLIS_MCP_URL` → `exec` the stdio package from args, set → `exec python3 scripts/mcp-relay.py`) and `scripts/mcp-relay.py` (stdlib-only stdio↔Streamable HTTP relay, Python ≥3.9; bearer from `JADLIS_MCP_BEARER` env, not argv; on 404 after a daemon restart replays the cached initialize once and retries; JSON and SSE replies; no GET-stream server notifications).
+- Changed: `.mcp.json` — `brave-search`, `firecrawl`, `reddit-alt`, `youtube` now start via `${CLAUDE_PLUGIN_ROOT}/scripts/mcp-run`; server keys unchanged, so tool names `mcp__plugin_jadlis-search_<server>__*` stay the same. `reddit` (hosted `https://mcp.dialog.tools/mcp`) unchanged.
+- Added: `userConfig` `brave_mcp_url`, `firecrawl_mcp_url`, `reddit_alt_mcp_url`, `youtube_mcp_url` (string, default `""`) and `shared_mcp_token` (sensitive, default `""`).
+- Added: `tests/test_mcp_relay_jadlis_search.py` — round-trip (JSON + SSE) and restart recovery against a fake daemon.
+- Why: the personal build pointed `.mcp.json` at localhost daemons on a separate branch (`local-http`) that needed a manual rebase on every release; Claude Code cannot switch a plugin server's transport by variable (`mcp.md:625-633` — no expansion in `type`), so the switch lives in the launcher. Measured 02.10.2026 on brave: full `npx` server tree 290–298 MB / 2 procs, relay 16–27 MB / 1 proc, `mcp-remote` 350 MB.
+- Changed: `.claude-plugin/plugin.json` version 2.1.1 → 2.2.0 (dependents require `^2`).
+
 ## [2.1.1] — 2026-09-30
 
 ### Для человека
