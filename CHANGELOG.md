@@ -5,6 +5,19 @@
 
 ## [Unreleased]
 
+## [2.2.1] — 2026-10-07 — поиск Brave в режиме context больше не падает / Brave context mode no longer crashes
+
+### Для человека
+
+- `websearch.py brave --mode context` снова печатает результаты. Раньше он падал с `TypeError` на любом запросе, где у источника была дата; обходом был только `--out json`.
+- Дата у результатов Brave теперь всегда в виде `2025-01-08` или пустая.
+
+### For agents
+
+- Fixed: `norm_brave_ctx` sliced `sources[url].age` with `[:10]`, but Brave `llm/context` sends `age` as a list of four renderings (`["Wednesday, January 08, 2025", "2025-01-08", "636 days ago", "2025-01-08T13:37:18Z"]`) or `[]`; the list reached `render_results` and `" · " + list` raised `TypeError` (seen live 2026-10-07). New `brave_date()` takes the first `YYYY-MM-DD` string from a string or a list; `norm_brave_web` uses it too, so a relative `age` like `"2 days ago"` now gives `""` instead of the cut `"2 days ag"`.
+- Added: `tests/test_websearch_brave_dates_jadlis_search.py` — list / empty list / string `age`, missing source, render without crash.
+- Changed: `.claude-plugin/plugin.json` version 2.2.0 → 2.2.1.
+
 ## [2.2.0] — 2026-10-02 — общий MCP-сервер вместо копии в каждой сессии / shared MCP server instead of a copy per session
 
 ### Для человека

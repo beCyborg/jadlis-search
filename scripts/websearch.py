@@ -400,12 +400,24 @@ def norm_exa_result(r):
             "snippet": snippet or "", "domain": domain_of(r.get("url") or r.get("id") or "")}
 
 
+ISO_DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+def brave_date(v):
+    """Brave `age`/`page_age` -> YYYY-MM-DD or "". llm/context sends a list of renderings
+    (["Wednesday, January 08, 2025", "2025-01-08", "636 days ago", "2025-01-08T13:37:18Z"]) or []."""
+    for s in (v if isinstance(v, list) else [v]):
+        if isinstance(s, str) and ISO_DATE_RE.match(s):
+            return s[:10]
+    return ""
+
+
 def norm_brave_web(r):
     snippet = strip_html(r.get("description") or "")
     if not snippet and r.get("extra_snippets"):
         snippet = r["extra_snippets"][0]
-    date = r.get("page_age") or r.get("age") or ""
-    return {"title": strip_html(r.get("title") or ""), "url": r.get("url") or "", "date": date[:10],
+    date = brave_date(r.get("page_age")) or brave_date(r.get("age"))
+    return {"title": strip_html(r.get("title") or ""), "url": r.get("url") or "", "date": date,
             "snippet": snippet, "domain": domain_of(r.get("url") or "")}
 
 
@@ -413,7 +425,7 @@ def norm_brave_ctx(g, sources):
     url = g.get("url") or ""
     src = (sources or {}).get(url) or {}
     snippet = (g.get("snippets") or [""])[0]
-    return {"title": g.get("title") or src.get("title") or "", "url": url, "date": (src.get("age") or "")[:10],
+    return {"title": g.get("title") or src.get("title") or "", "url": url, "date": brave_date(src.get("age")),
             "snippet": snippet, "domain": domain_of(url)}
 
 
