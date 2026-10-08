@@ -1,14 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "jadlis-search",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "displayName": "Jadlis — поиск и ключи ресерч-стека",
   "description": "Поиск в вебе (Brave — по словам, Exa — по смыслу) и страницы через Firecrawl, плюс пять MCP-серверов и единая точка ключей (scripts/secret.sh → Связка ключей macOS). База для плагинов research и science-research.",
   "author": {
     "name": "Be Cyborg"
   },
-  "homepage": "https://github.com/beCyborg/jadlis-search",
-  "repository": "https://github.com/beCyborg/jadlis-search",
+  "homepage": "https://gitlab.com/beCyborg/jadlis-search",
+  "repository": "https://gitlab.com/beCyborg/jadlis-search",
   "keywords": [
     "jadlis",
     "search",

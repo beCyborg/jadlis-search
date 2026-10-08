@@ -6,7 +6,7 @@
 текст страницы снимается отдельной лестницей, где Firecrawl стоит последним.
 
 ```
-claude plugin marketplace add https://github.com/beCyborg/jadlis-hub
+claude plugin marketplace add https://gitlab.com/beCyborg/jadlis-hub.git
 claude plugin install jadlis-search@jadlis
 ```
 
@@ -54,7 +54,7 @@ claude plugin install jadlis-search@jadlis
 Ты — установщик. Поставь на этот Mac плагин jadlis-search из маркетплейса jadlis.
 Сначала скажи мне, macOS ли это: хранение ключей завязано на Связку ключей macOS.
 Выполни ровно эти команды, дословно, ничего не сокращая:
-1. claude plugin marketplace add https://github.com/beCyborg/jadlis-hub
+1. claude plugin marketplace add https://gitlab.com/beCyborg/jadlis-hub.git
 2. claude plugin install jadlis-search@jadlis
 3. claude plugin list — покажи мне строку про jadlis-search и его версию.
 Плагин попросит два обязательных ключа, Brave и Firecrawl: значения ввожу я сам, ты их не
@@ -67,7 +67,7 @@ claude plugin install jadlis-search@jadlis
 **б) Команды руками.**
 
 ```
-claude plugin marketplace add https://github.com/beCyborg/jadlis-hub
+claude plugin marketplace add https://gitlab.com/beCyborg/jadlis-hub.git
 claude plugin install jadlis-search@jadlis
 claude plugin list
 ```
