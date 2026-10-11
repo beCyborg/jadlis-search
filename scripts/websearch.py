@@ -668,7 +668,7 @@ def validate_exa_args(a, max_n=MAX_N):
     valid_date(a.start, "--start")
     valid_date(a.end, "--end")
     if a.type in ("keyword", "neural"):
-        err("[warn] type %r is legacy (not in the documented enum) — on HTTP 400 retry with --type auto" % a.type)
+        err("[warn] type %r is legacy (not in the documented enum; lost 0:14 to auto on Russian queries) — use --type auto" % a.type)
 
 
 def cmd_exa(a):
@@ -1206,7 +1206,8 @@ def build_parser():
     e = sub.add_parser("exa", help="Exa /search")
     e.add_argument("query")
     e.add_argument("--tag", required=True, choices=TAGS)
-    e.add_argument("--type", default="auto", choices=EXA_TYPES)
+    e.add_argument("--type", default="auto", choices=EXA_TYPES,
+                   help="search type (default auto — Russian queries too; keyword/neural are legacy and lose to auto on RU)")
     e.add_argument("--category", choices=EXA_CATEGORIES)
     e.add_argument("--include-domains", help="a.com,b.org")
     e.add_argument("--exclude-domains")
@@ -1240,7 +1241,7 @@ def build_parser():
     bo.add_argument("--tag", required=True, choices=TAGS)
     bo.add_argument("--query-exa", help="separate page-description query for Exa")
     bo.add_argument("-n", type=int, default=8)
-    bo.add_argument("--type", default="auto", choices=EXA_TYPES, help="Exa type")
+    bo.add_argument("--type", default="auto", choices=EXA_TYPES, help="Exa type (default auto, Russian queries too; keyword/neural are legacy)")
     bo.add_argument("--mode", default="web", choices=["web", "context"], help="Brave mode")
     bo.add_argument("--country")
     bo.add_argument("--lang", help="Brave search_lang")

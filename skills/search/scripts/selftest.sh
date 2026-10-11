@@ -230,7 +230,7 @@ if [[ "${1:-}" == "--live" ]]; then
     out=$("$PY" "$WS" contents https://exa.ai/docs/reference/pricing --highlights 2>/dev/null); rc=$?
     if [[ $rc -eq 0 ]] && grep -q '── EXA contents highlights' <<<"$out"; then pass "live exa contents highlights"; else fail "live exa contents" "exit $rc"; fi
     "$PY" "$WS" exa "q" --tag other --type keyword -n 1 --contents none >/dev/null 2>"$TMPDIR/ws-kw.err"; rc=$?
-    if [[ $rc -eq 0 ]]; then pass "live exa legacy keyword still accepted"; elif grep -q 'HTTP 400' "$TMPDIR/ws-kw.err"; then fail "live exa keyword" "API now rejects legacy type — switch docs/SKILL to auto"; else fail "live exa keyword" "exit $rc"; fi
+    if [[ $rc -eq 0 ]]; then pass "live exa legacy keyword still accepted"; elif grep -q 'HTTP 400' "$TMPDIR/ws-kw.err"; then fail "live exa keyword" "API now rejects legacy type keyword — drop it from EXA_TYPES"; else fail "live exa keyword" "exit $rc"; fi
     rm -f "$TMPDIR/ws-kw.err"
   fi
   if [[ -z "${BRAVE_API_KEY:-}" ]]; then

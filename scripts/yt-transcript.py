@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """yt-transcript.py <video_id> [--lang en,ru,pl] — транскрипт YouTube-видео как JSON.
 
-Обёртка для канала youtube (/full-research, /search-community) вместо прямого вызова
-get_transcript.py плагина youtube-tldr:
-  1. сначала get_transcript.py плагина (youtube-transcript-api — один запрос, быстро);
-  2. при blocked/network/любой ошибке — yt-dlp: `-J` (метаданные + список субтитров),
-     выбор ОДНОГО трека (manual в предпочтённом языке → manual любой → auto *-orig →
-     auto предпочтённый), затем загрузка только его в json3.
+Обёртка для канала youtube (/research) вместо прямого вызова get_transcript.py плагина youtube-tldr:
+  1. сначала get_transcript.py плагина youtube-tldr (youtube-transcript-api — один запрос, быстро).
+     Путь необязательный: если плагина нет по PLUGIN_PY/PLUGIN_SCRIPT (не установлен или
+     другой CLAUDE_CONFIG_DIR), шаг молча пропускается и сразу идёт yt-dlp;
+  2. при отсутствии плагина / blocked / network / любой ошибке — yt-dlp: `-J` (метаданные + список
+     субтитров), выбор ОДНОГО трека (pick_track: manual в предпочтённом языке → manual любой →
+     auto `<язык аудио>-orig` → …), затем загрузка только его в json3.
 Почему не фоллбэк самого плагина: там `--sub-langs all` (150+ авто-переводов) при
 timeout=30 → TimeoutExpired → None (сверено 2026-08-26). youtube-transcript-api даёт
 IpBlocked ИНТЕРМИТТЕНТНО и через VPN, и с домашнего IP (bound-тест en0), yt-dlp — работает везде.
@@ -136,8 +137,13 @@ def err(error_type, message, code=1):
     sys.exit(code)
 
 
+def plugin_available():
+    """Путь 1 (плагин youtube-tldr) необязательный: без файлов — тихий пропуск."""
+    return os.path.exists(PLUGIN_PY) and os.path.exists(PLUGIN_SCRIPT)
+
+
 def try_plugin(video_id):
-    if not (os.path.exists(PLUGIN_PY) and os.path.exists(PLUGIN_SCRIPT)):
+    if not plugin_available():
         return None, None
     try:
         r = subprocess.run([PLUGIN_PY, PLUGIN_SCRIPT, video_id], capture_output=True, text=True, timeout=60)
@@ -150,7 +156,18 @@ def try_plugin(video_id):
     return None, (d if isinstance(d, dict) and d.get('status') == 'error' else None)
 
 
+def lang_base(code):
+    """'en-US' / 'en-orig' / 'de-DE-orig' → 'en' / 'en' / 'de'."""
+    return (code or '').lower().split('-')[0]
+
+
 def pick_track(info, prefs):
+    """Один трек субтитров: (key, is_generated) или (None, None).
+
+    Авто-дубляж YouTube кладёт в automatic_captions до ~20 ключей `*-orig` — по одному на
+    каждую дублированную дорожку (Ajqub1jgsVM: 21 ключ, первый `ar-orig` при языке видео
+    en-US). Поэтому `*-orig` берётся только по языку аудио (`info['language']`), а не первый.
+    """
     manual = info.get('subtitles') or {}
     auto = info.get('automatic_captions') or {}
 
@@ -166,10 +183,28 @@ def pick_track(info, prefs):
         return k, False
     if manual:
         return sorted(manual.keys())[0], False
-    orig = [k for k in auto if k.endswith('-orig')]
-    if orig:
+
+    orig = sorted(k for k in auto if k.lower().endswith('-orig'))
+    by_lower = {k.lower(): k for k in orig}
+    vlang = (info.get('language') or '').strip().lower()
+    if vlang:
+        # 1. язык аудио: точный `en-us-orig`, затем базовый `en-orig`, затем региональный вариант той же базы
+        for cand in (vlang + '-orig', lang_base(vlang) + '-orig'):
+            if cand in by_lower:
+                return by_lower[cand], True
+        same = [k for k in orig if lang_base(k) == lang_base(vlang)]
+        if same:
+            return same[0], True
+    elif len(orig) == 1:
+        # язык аудио неизвестен, но `-orig` один — дубляжа нет, это оригинал
         return orig[0], True
-    k = by_pref(auto.keys())
+    # 2. запрошенный --lang: `<lang>-orig`
+    for p in prefs:
+        cand = p.lower() + '-orig'
+        if cand in by_lower:
+            return by_lower[cand], True
+    # 3. запрошенный --lang среди обычных авто-треков (авто-перевод), без чужих `-orig`
+    k = by_pref([k for k in auto if k not in orig])
     if k:
         return k, True
     if auto:
@@ -243,7 +278,8 @@ def main():
         # yt-dlp тоже не смог: если плагин дал содержательную ошибку (не блок) — отдаём её
         if plugin_err and plugin_err.get('error_type') not in (None, 'blocked', 'network'):
             err(plugin_err['error_type'], plugin_err.get('message', ''))
-        err('blocked_or_network', f'youtube-transcript-api: {(plugin_err or {}).get("error_type", "n/a")}; {why}')
+        first = (plugin_err or {}).get('error_type', 'n/a') if plugin_available() else 'skipped (plugin not installed)'
+        err('blocked_or_network', f'youtube-transcript-api: {first}; {why}')
     print(json.dumps(d, ensure_ascii=False))
     sys.exit(0 if d.get('status') == 'ok' else 1)
 

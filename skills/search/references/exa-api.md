@@ -86,7 +86,7 @@
 | `mcp.exa.ai/mcp` `initialize` без ключа | 200 |
 | `tools/list` с `x-api-key` и `?tools=…` | ровно 4 тула, схемы как в реестре |
 
-Вывод для RU: `auto`/`fast` уводят в англоязычные источники (для науки — плюс), для Рунета нужен `--type keyword` (или `/yandex-search`); `neural` — компромисс с шумом. `resolvedSearchType` приходит пустым.
+Вывод 24.08 для RU (`keyword` для Рунета) отменён: слепой тест 10.2026 на 16 RU-запросах — `auto` 14 : 0 против `keyword` (см. `exa-rules.md` § Русский язык). Для RU — `auto`; глубокий Рунет — `/yandex-search`. `resolvedSearchType` приходит пустым.
 
 ## Расхождения доков и провода
 

@@ -5,6 +5,25 @@
 
 ## [Unreleased]
 
+## [2.2.3] — 2026-10-12 — транскрипт YouTube на языке видео, русские запросы в Exa через auto / YouTube transcript in the video's language, Russian Exa queries via auto
+
+### Для человека
+
+- Транскрипт YouTube теперь приходит на языке, на котором говорят в видео. Раньше у видео с авто-дубляжом скрипт брал первую дорожку по алфавиту, поэтому англоязычное видео приходило арабским текстом. Так было в 13 из 23 прогонов канала youtube с 24.09.
+- Если старого плагина youtube-tldr нет, скрипт молча идёт сразу через yt-dlp. В тексте ошибки теперь сказано «skipped (plugin not installed)», а не «n/a».
+- `/search` больше не советует `--type keyword` для русских запросов в Exa. Слепой тест с двумя судьями: `auto` выиграл 14 : 0, у `keyword` меньше результатов, меньше русских страниц и они старее.
+- Для запросов про людей, компании и продукты `/search` теперь берёт Exa первым: в том же тесте Exa выиграл у Brave 7 : 0 на английских запросах.
+
+### For agents
+
+- Fixed: `scripts/yt-transcript.py` `pick_track` returned `orig[0]` — the first `*-orig` key in `automatic_captions`. Auto-dubbing adds one `-orig` key per dubbed audio track (`Ajqub1jgsVM`: 21 keys, first `ar-orig`, `language: en-US`), and `--lang` did not help because the `-orig` branch ran before `by_pref`. New order after manual subs: `<info.language>-orig` (exact, then base `en-orig`, then a regional key with the same base like `de-DE-orig`) → if `language` is unknown and there is exactly one `-orig`, that one → `<--lang>-orig` → `--lang` among non-`-orig` auto keys → any auto key as before. A foreign `-orig` is never picked ahead of a requested-language track. Live check 2026-10-12: `Ajqub1jgsVM` → `en-orig` with and without `--lang ru`.
+- Changed: `try_plugin` path to the youtube-tldr plugin is documented as optional; new `plugin_available()`; the final `blocked_or_network` message says `skipped (plugin not installed)` when the files are absent. Docstring no longer names `/search-community`.
+- Added: `tests/test_yt_transcript_pick_track_jadlis_search.py` — dubbed video (fake `yt-dlp -J` info), `--lang ru` not pulling a dub, regional and exact regional `-orig`, unknown language, manual-first, no captions, silent skip of the missing plugin.
+- Changed: `skills/search/SKILL.md` — RU rule is now `--type auto` (was `--type keyword`), quick-start RU example without `--type keyword`, new intent row «люди / компании / продукты → Exa первым», R3 summary line (blind test 2026-10, 48 queries, Claude Opus 5.5 + Codex judges: Exa-auto 27 : Brave 13; auto vs keyword on RU 14 : 0), description and Routing details updated. `references/exa-rules.md` § Русский язык, `references/exa-api.md` RU conclusion and `references/ab-log.md` interpretation note follow.
+- Changed: `scripts/websearch.py` `--type` help (`exa`, `both`) says auto is the default for Russian queries too; the legacy-type warning now says to use `--type auto`. `skills/search/scripts/selftest.sh` live-row hint text updated.
+- Changed: `.claude-plugin/plugin.json` version 2.2.2 → 2.2.3.
+- Note: `jadlis-research` vendors `scripts/` — re-vendor `yt-transcript.py` and `websearch.py` there to pick up the fix.
+
 ## [2.2.2] — 2026-10-08 — репозиторий переехал на GitLab / repository moved to GitLab
 
 ### Для человека

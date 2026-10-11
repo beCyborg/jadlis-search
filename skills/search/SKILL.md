@@ -1,6 +1,6 @@
 ---
 name: search
-description: "Web search via Brave (keyword) + Exa (semantic) through scripts/websearch.py with cost log; contents/Firecrawl for full pages. research/news → brave, describe-a-page → exa. Triggers: search the web, google it, find info on. RU triggers: найди в интернете, поищи в сети, загугли, найди информацию о, что известно о. Do NOT use for: communities → /full-research; papers → /search-paper."
+description: "Web search via Brave (keyword) + Exa (semantic) through scripts/websearch.py with cost log; contents/Firecrawl for full pages. research/news → brave; describe-a-page, people/company/product → exa (RU too: --type auto). Triggers: search the web, google it, find info on. RU triggers: найди в интернете, поищи в сети, загугли, найди информацию о, что известно о. Do NOT use for: communities → /full-research; papers → /search-paper."
 argument-hint: <query>
 ---
 
@@ -12,6 +12,8 @@ argument-hint: <query>
 
 **Итог A/B «Exa vs Brave» (окно 25.08–07.09.2026, закрыто досрочно 01.09):** счёт 38:34:30 (exa:brave:tie) — ничья. Решение: **роутинг по интенту**, `both` больше не дефолт, `verdict` после пары — по желанию (лог принимает, отчёт считает). Движок выбирается по тому, что он умеет, а не «оба и сравнить».
 
+**Повтор 10.2026 (48 запросов, слепо, два судьи разных семейств):** Exa `auto` 27 : Brave 13; EN люди/компании/продукты — Exa 7 : 0 (RU — мало данных, 4 запроса); EN research — ничья. Exa `auto` против `keyword` на RU-запросах — 14 : 0 (keyword даёт меньше результатов, меньше кириллицы и старее). Отсюда: люди/компании/продукты → Exa первым; RU-запросы в Exa — только `--type auto`.
+
 **Запрос пользователя:** `$ARGUMENTS`
 
 ---
@@ -22,7 +24,8 @@ argument-hint: <query>
 |---|---|
 | Research, «что известно о X», список источников, новости, свежесть — **default** | `python3 $S brave "<q>" --tag research\|sources\|news [--freshness pw\|pm] [-n 8]` |
 | «Опиши целевую страницу» (семантика, Exa сильнее) | `python3 $S exa "<описание страницы>" --tag …` |
-| Люди / компании / научные публикации / новости по типу | `python3 $S exa "…" --tag people\|company\|research\|news --category people\|company\|publication\|news` |
+| Люди / компании / продукты — **Exa первым** (Brave — вторым, если мало) | `python3 $S exa "…" --tag people\|company\|product [--category people\|company]` |
+| Научные публикации / новости по типу | `python3 $S exa "…" --tag research\|news --category publication\|news` |
 | Ограничить домены / даты | Exa: `--include-domains a.com,b.org` `--exclude-domains …` `--start 2026-01-01 --end …`; Brave: `--goggles $'$discard\n$site=vc.ru'` `--freshness pd\|pw\|pm\|py` |
 | Оба движка — **только по явной просьбе** («сравни движки», «через оба») | `python3 $S both "<q>" --tag … [--query-exa "<описание страницы>"]` → синтез → `verdict` (опционально) |
 | Одна страница целиком / подстраницы / свежий краул | `python3 $S contents <url…> --full [--text\|--highlights\|--summary] [--subpages 5 --subpage-target api,pricing] [--max-age-hours 0]` (~$0.001/стр.; **`--full` обязателен для снапшотов** — дефолт `--max-chars 8000` молча режет страницу) → фоллбэк `mcp__plugin_jadlis-search_firecrawl__firecrawl_scrape` |
@@ -39,7 +42,7 @@ argument-hint: <query>
 
 - **Brave = keyword-индекс:** ключевые слова, операторы (`site:`, кавычки), goggles. `React server components architecture explained 2026`.
 - **Exa = эмбеддинги:** описание целевой страницы натуральной фразой, без булевых операторов и кавычек; 1–2 слова = разброс. `technical blog post explaining how React server components work internally`. Дефолт `--type auto` + highlights; `-n` не поднимать выше 10–15 — лучше 2–3 запроса с разных углов.
-- **Русский:** Exa `auto`/`fast` на RU-запрос уводит в **англоязычные** источники (для науки — плюс). Для Рунета — `--type keyword` (лексический, даёт русские страницы) или Яндекс; `neural` — русские, но шумнее.
+- **Русский:** Exa — `--type auto` (дефолт), запрос по-русски полным предложением. Слепой тест 10.2026: `auto` выиграл у `keyword` 14 : 0, у `auto` 96% кириллических результатов против 79%. `keyword`/`neural` — legacy, для RU не использовать. Глубокий Рунет, регионы, операторы — Яндекс.
 - В `both` один текст уходит обоим; когда формулировки должны различаться — `--query-exa "<описание страницы>"`.
 - Полные правила Exa — `references/exa-rules.md`.
 
@@ -49,7 +52,7 @@ argument-hint: <query>
 S=${CLAUDE_PLUGIN_ROOT}/scripts/websearch.py
 python3 $S brave "exa vs brave neural search" --tag research -n 5           # default: research/news
 python3 $S exa "detailed practitioner blog post about X" --tag research     # семантика (auto + highlights)
-python3 $S exa "пробиотики при акне исследования" --tag research --type keyword   # RU-страницы
+python3 $S exa "исследования пробиотиков при акне: какие штаммы помогают" --tag research   # RU: тоже auto
 python3 $S exa "systematic review of X" --tag research --category publication --start 2026-01-01 -n 10
 python3 $S both "exa vs brave neural search" --tag research -n 5            # только по просьбе: пара + pair_id
 python3 $S verdict 8e509b38 exa --why relevance --note "Brave дал маркетинг"  # опционально после both
@@ -106,7 +109,7 @@ verdict: python3 …/websearch.py verdict 8e509b38 exa|brave|tie --why relevance
 Canonical web-tool rules (moved here from `~/.claude/rules/routing.md`, 2026-09-06).
 
 - **Native `WebSearch`/`WebFetch` are not used** — Brave and Exa are paid and logged. Main thread goes through `websearch.py` (cost log), not `mcp__exa__*` / `brave_web_search` directly.
-- **Exa** (`EXA_API_KEY`, $0.007/search, free $10/mo): query = description of the target page, no operators. RU query in `auto` drifts to English sources → `--type keyword` or `/yandex-search`. MCP `exa` (`web_search_exa`, `web_fetch_exa`, `web_search_advanced_exa`, `agent_run`) — for subagents; `agent_run` only on explicit request ($0.025–$1/run). Do not install plugin `exa@claude-plugins-official` (ships a `search` skill — name collision).
+- **Exa** (`EXA_API_KEY`, $0.007/search, free $10/mo): query = description of the target page, no operators. Russian queries: `--type auto` too (blind test 2026-10: auto beat keyword 14:0; keyword is legacy and gave fewer, older, less Cyrillic results); deep Runet/regional → `/yandex-search`. People/company/product intents → Exa first (EN 7:0 vs Brave; RU sample too small). MCP `exa` (`web_search_exa`, `web_fetch_exa`, `web_search_advanced_exa`, `agent_run`) — for subagents; `agent_run` only on explicit request ($0.025–$1/run). Do not install plugin `exa@claude-plugins-official` (ships a `search` skill — name collision).
 - **Brave** (Search plan, $0.005/req): `brave_web_search` (+`extra_snippets`), `brave_llm_context` (page content in one call; script `brave --mode context`; Brave's recommended AI path). Domain filter: Goggles `$discard\n$site=domain.com` or `site:` operator. Specialized: `brave_news_search`, `brave_image_search`, `brave_video_search`. `brave_summarizer` / Answers API not used. Brave 402/403 (billing) → `both` degrades to Exa, exit 0.
 - **BUG (checked 2026-08-06):** any single non-web type in `result_filter` (`discussions`, `faq`, `infobox`…) → `No web results found`, 0 results. Always add `"web"`: `result_filter=["web","discussions"]`.
 - **Rate limits:** Brave 50 req/s (parallel OK); Exa `/search` 10 QPS (free tier 5), `/contents` 100 QPS; script daily soft cap $2 (`--force`); Firecrawl scrape 1 req/s. On 429: wait 1 s, retry (max 2).
