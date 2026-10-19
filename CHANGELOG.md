@@ -5,6 +5,19 @@
 
 ## [Unreleased]
 
+## [2.2.4] — 2026-10-19 — дневной лимит поиска настраивается и выключается / daily search cap is configurable and can be turned off
+
+### Для человека
+
+- Дневной лимит расходов на поиск ($2 в день) теперь можно поменять или выключить переменной `JADLIS_SEARCH_DAILY_CAP_USD`. `0` или `off` выключает лимит, число задаёт свой лимит в долларах. Без переменной всё как раньше: $2 в день и `--force` для обхода.
+
+### For agents
+
+- Added: `scripts/websearch.py` `_daily_cap()` reads `JADLIS_SEARCH_DAILY_CAP_USD` (`0`/`0.0`/`off`/`none` → no cap; a number → that cap in USD; empty or unparsable → 2.0). `check_cap()` returns early when the cap is 0 (no block, no 75 % warning). `--force` help mentions the variable.
+- Changed: `skills/search/SKILL.md` rate-limits line names the variable.
+- Changed: `.claude-plugin/plugin.json` version 2.2.3 → 2.2.4.
+- Note: `jadlis-research` vendors `scripts/websearch.py` — re-vendor to pick up the variable.
+
 ## [2.2.3] — 2026-10-12 — транскрипт YouTube на языке видео, русские запросы в Exa через auto / YouTube transcript in the video's language, Russian Exa queries via auto
 
 ### Для человека
