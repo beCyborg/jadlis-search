@@ -39,7 +39,7 @@
       "args": [
         "npx",
         "-y",
-        "redditapis-mcp@0.6.1"
+        "redditapis-mcp@0.15.0"
       ],
       "env": {
         "REDDITAPIS_KEY": "${user_config.REDDITAPIS_KEY}",
