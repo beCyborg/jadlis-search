@@ -35,7 +35,7 @@
 | Поле | Значение |
 |---|---|
 | `query` | натуральная фраза-описание целевой страницы (правила — `exa-rules.md`) |
-| `type` | `auto` (default, ~1 с) · `fast` (~450 мс) · `instant` (~250 мс) · `deep-lite` · `deep` · `deep-reasoning`. Legacy `keyword` / `neural` в enum доков нет, но на проводе живы (см. матрицу) |
+| `type` | `lite` (default `websearch.py` с 11.2026, $4/1k, ~0,6 с) · `auto` (дефолт API, ~1 с) · `fast` (~450 мс) · `instant` (~250 мс) · `deep-lite` · `deep` · `deep-reasoning`. Legacy `keyword` / `neural` в enum доков нет, но на проводе живы (см. матрицу) |
 | `numResults` | default 10, 1–100 по докам; «никогда >25» (best practices); скрипт режет >25 |
 | `category` | `company` · `people` · `publication` · `news` · `personal site` · `financial report`. `company`/`people` **не поддерживают** `startPublishedDate`/`endPublishedDate`/`excludeDomains` → 400; `people` в `includeDomains` принимает только LinkedIn-домены |
 | `includeDomains` / `excludeDomains` | string[], домены/пути/wildcard, ≤1200 |
