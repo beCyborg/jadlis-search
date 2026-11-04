@@ -33,3 +33,18 @@ def test_parse_keeps_organic_only():
 
 def test_parse_empty_page():
     assert yb.parse("<html>captcha</html>") == ([], 0)
+
+
+def test_fetch_retries_empty_page(monkeypatch):
+    pages = [b"", ("<html>" + item("https://vc.ru/x", "T", "S") + "</html>").encode()]
+
+    class R:
+        def __init__(self, b): self.b = b
+        def read(self): return self.b
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+
+    calls = []
+    monkeypatch.setattr(yb.urllib.request, "urlopen", lambda req, timeout: calls.append(1) or R(pages[len(calls) - 1]))
+    page, _ = yb.fetch("k", "z", "https://yandex.ru/search/?text=x", 5, 2)
+    assert len(calls) == 2 and "serp-item" in page

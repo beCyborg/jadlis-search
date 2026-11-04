@@ -7,8 +7,8 @@ parses the organic results into the same output as yaparse.py (text | json | url
 Why it exists (audit 2026-11-04): the Yandex Search API account was suspended over billing and accepts
 RU cards/SBP only for residents. Bench on 9 Russian research queries: 68/90 relevant results in the top
 10 vs 57/90 for Brave, `site:` works. Costs: 5 000 requests/month free, then $1.5 per 1 000.
-Limits: median 55 s per request (33–82 s), ~1 in 5 first attempts fails (timeout / 502) → timeout 180 s
-and one retry. No JSON mode for Yandex (brd_json=1 → 400). Exit node is outside Russia (RU targeting is
+Limits: median 55 s per request (33–82 s), ~1 in 5 first attempts fails (timeout / 502 / an empty page)
+→ timeout 180 s and up to two retries. No JSON mode for Yandex (brd_json=1 → 400). Exit node is outside Russia (RU targeting is
 forbidden by Bright Data policy); the region comes only from `lr`. Dates are rarely visible (3/90).
 
 Usage: yandex-bd.py "<query>" [--region 225] [--page 0] [--num 10] [--out text|json|urls]
@@ -99,7 +99,13 @@ def fetch(key, zone, url, timeout, retries):
         t0 = time.time()
         try:
             with urllib.request.urlopen(req, timeout=timeout) as r:
-                return r.read().decode("utf-8", "replace"), time.time() - t0
+                page = r.read().decode("utf-8", "replace")
+            if 'class="serp-item' in page:
+                return page, time.time() - t0
+            # empty body or a page without results (captcha / unblock hiccup) — seen live 04.11, a retry fixed it
+            last = "page without serp items (%d chars)" % len(page)
+            if attempt == retries:
+                return page, time.time() - t0  # let the caller report exit 5 with the page head
         except urllib.error.HTTPError as e:
             last = "HTTP %s: %s" % (e.code, e.read()[:300].decode("utf-8", "replace"))
             if e.code in (400, 401, 403):
@@ -135,7 +141,7 @@ def main():
     ap.add_argument("--out", choices=["text", "json", "urls"], default="text")
     ap.add_argument("--passage-chars", type=int, default=220)
     ap.add_argument("--timeout", type=int, default=180)
-    ap.add_argument("--retries", type=int, default=1)
+    ap.add_argument("--retries", type=int, default=2)
     a = ap.parse_args()
     if not a.query.strip():
         err("[error] empty query")

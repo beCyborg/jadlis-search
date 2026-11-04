@@ -5,6 +5,17 @@
 
 ## [Unreleased]
 
+## [2.3.2] — 2026-11-04 — Bright Data повторяет пустую выдачу / Bright Data retries an empty page
+
+### Для человека
+
+- Если Bright Data вернул пустую страницу или страницу без выдачи Яндекса, скрипт сам повторяет запрос (до двух раз). 04.11 такой сбой случился на живом запросе, повтор вручную сразу дал 10 результатов.
+
+### For agents
+
+- Fixed: `scripts/yandex-bd.py` `fetch()` treats a body without `serp-item` as a retryable failure; `--retries` default 1 → 2; test `test_fetch_retries_empty_page`.
+- Changed: `.claude-plugin/plugin.json` version 2.3.1 → 2.3.2.
+
 ## [2.3.1] — 2026-11-04 — Яндекс сразу через Bright Data, пока API недоступен / Yandex goes straight to Bright Data while the API is down
 
 ### Для человека
