@@ -5,6 +5,18 @@
 
 ## [Unreleased]
 
+## [2.3.1] — 2026-11-04 — Яндекс сразу через Bright Data, пока API недоступен / Yandex goes straight to Bright Data while the API is down
+
+### Для человека
+
+- Если Yandex Search API ответил 401/402/403 (биллинг приостановлен, нет роли или ключа), скрипт 6 часов не стучится в API и сразу идёт в Bright Data. Раньше каждый запрос сначала получал 403 и писал ошибку в журнал. Решение владельца 04.11: пока платить за Yandex Cloud нечем, Рунет идёт через Bright Data.
+- Запросы к Bright Data можно гонять параллельно: два запроса вместе — 96 с.
+
+### For agents
+
+- Added: `scripts/yandex-search.sh` writes `~/.cache/jadlis-search/yandex-api-down` on 401/402/403 (`JADLIS_SEARCH_STOP_DIR` overrides the dir); under `YANDEX_BACKEND=auto` with a Bright Data key, a fresh mark (< 6 h) hands the query to `yandex-bd.py` before any API call; delete the mark to retry the API.
+- Changed: `.claude-plugin/plugin.json` version 2.3.0 → 2.3.1.
+
 ## [2.3.0] — 2026-11-04 — Exa lite по умолчанию, новая лестница текста, запасные бэкенды X и Яндекса / Exa lite default, new page-text ladder, fallback backends for X and Yandex
 
 ### Для человека

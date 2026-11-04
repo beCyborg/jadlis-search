@@ -30,7 +30,8 @@ set -euo pipefail
 #     ≥1 s between batch calls.
 #   - FALLBACK: YANDEX_BACKEND=auto (default) hands the query to scripts/yandex-bd.py (Bright Data SERP,
 #     same output format) when the API answers 401/402/403 and BRIGHTDATA_API_KEY is set;
-#     YANDEX_BACKEND=brightdata always uses it, =yandex never does.
+#     YANDEX_BACKEND=brightdata always uses it, =yandex never does. After a 401/402/403 the API is skipped
+#     for 6 h (mark ~/.cache/jadlis-search/yandex-api-down) and auto goes straight to Bright Data.
 #   - stdout carries ONLY the result (or operation_id=…); all diagnostics go to stderr
 #     ([cost], [poll], [warn], [error]) — stdout is safe to pipe.
 #
@@ -305,10 +306,16 @@ bd_fallback() { # $1 reason → exec Bright Data backend with the same query/out
   exec python3 "$SCRIPT_DIR/yandex-bd.py" "$QUERY" --region "$REGION" --page "${PAGE:-0}" \
     --num "$NUM" --out "$OUT" --passage-chars "$PASSAGE_CHARS"
 }
+API_DOWN_MARK="${JADLIS_SEARCH_STOP_DIR:-$HOME/.cache/jadlis-search}/yandex-api-down"
+API_DOWN_TTL=$((6*3600))   # after 401/402/403 the API is skipped for 6 h (no noisy 403 before every fallback)
+api_down_fresh() { [[ -f "$API_DOWN_MARK" ]] && (( $(date +%s) - $(stat -f %m "$API_DOWN_MARK" 2>/dev/null || echo 0) < API_DOWN_TTL )); }
 BD_KEY_PRESENT=0
 if [[ -n "${BRIGHTDATA_API_KEY:-}" ]] || bash "$SCRIPT_DIR/secret.sh" BRIGHTDATA_API_KEY >/dev/null 2>&1; then BD_KEY_PRESENT=1; fi
 if [[ "${YANDEX_BACKEND:-auto}" == "brightdata" && "$MODE" != "fetch" && $DRY_RUN -eq 0 ]]; then
   bd_fallback "YANDEX_BACKEND=brightdata"
+fi
+if [[ "${YANDEX_BACKEND:-auto}" == "auto" && "$MODE" != "fetch" && $DRY_RUN -eq 0 && $BD_KEY_PRESENT -eq 1 ]] && api_down_fresh; then
+  bd_fallback "Yandex Search API marked down $(( ($(date +%s) - $(stat -f %m "$API_DOWN_MARK")) / 60 )) min ago (rm $API_DOWN_MARK to retry the API)"
 fi
 
 if [[ "$MODE" == "sync" ]]; then
@@ -366,6 +373,7 @@ submit() { # POST $ENDPOINT with $BODY → $RESP_FILE; exits 3 on non-200
     err "[error] API HTTP $code:"
     cat "$RESP_FILE" >&2 || true
     err ""
+    if [[ "$code" =~ ^(401|402|403)$ ]]; then mkdir -p "$(dirname "$API_DOWN_MARK")" && date '+%F %T' > "$API_DOWN_MARK"; fi
     if [[ "$code" =~ ^(401|402|403)$ && "${YANDEX_BACKEND:-auto}" == "auto" && $BD_KEY_PRESENT -eq 1 ]]; then
       bd_fallback "Yandex Search API HTTP $code (billing suspended, role or key)"
     fi
