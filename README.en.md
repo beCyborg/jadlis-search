@@ -37,8 +37,9 @@ This is my workbench published as it is, not a product: whatever I stopped using
 ![The question goes to an engine by intent, the page is pulled by a ladder, and a hook cuts PDFs and x.com off before Firecrawl](docs/img/how-jadlis-search.webp)
 
 Going in — your question in plain language.
-Inside — intent decides who answers: Brave for words, Exa for meaning; if the full page text is
-needed it is pulled by a ladder, and a hook keeps PDFs and x.com away from Firecrawl.
+Inside — intent decides who answers: Exa (lite type) by default, Brave for fresh news; a blind test on
+50 real queries in November 2026 set that. The full page text is pulled by the ladder
+pdf-fetch → r.jina.ai → Firecrawl, and a hook keeps PDFs and x.com away from Firecrawl.
 Coming out — an answer with links, and a spending line in the log.
 
 In words: question → engine picked by intent → results → the full page pulled by the ladder if

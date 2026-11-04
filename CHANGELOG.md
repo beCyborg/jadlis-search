@@ -5,6 +5,37 @@
 
 ## [Unreleased]
 
+## [2.3.0] — 2026-11-04 — Exa lite по умолчанию, новая лестница текста, запасные бэкенды X и Яндекса / Exa lite default, new page-text ladder, fallback backends for X and Yandex
+
+### Для человека
+
+- Поиск по умолчанию теперь идёт через Exa типа `lite`. Слепой тест на 50 реальных запросах за три месяца (два судьи, Opus и Codex): `lite` равен `auto` по качеству, оба лучше Brave, а `lite` на 43 % дешевле. Brave остаётся для свежих новостей.
+- Треды Hacker News и Substack ищутся через Exa с фильтром домена. Reddit Exa не индексирует, поэтому треды Reddit ищутся через Brave `site:reddit.com`.
+- Полный текст страницы снимается по лестнице pdf-fetch → r.jina.ai → Firecrawl с новым гейтом. Он отбраковывает base64-заглушки, чужой язык, страницы блокировки и тела без нужной цитаты. На 60 реальных страницах — 57 из 57; прежняя лестница давала 54 и дважды молча брала пустышку.
+- Если сервис ответил 402 (кончились деньги или лимит), скрипт поиска 15 минут не шлёт туда запросы. 30.10 было 888 вызовов Brave за час после такого ответа.
+- X: у `twitterapi.sh` появился второй бэкенд — TwittrAPI ($0,0001 за вызов). Он включается сам, когда у TwitterAPI.io кончится баланс.
+- Яндекс: днём скрипт ходит синхронно (асинхронный режим Яндекс теперь принимает только с 00:00 до 06:00 МСК). Если API отвечает 401/402/403, запрос уходит в Bright Data SERP (новый `yandex-bd.py`, тот же вывод).
+- Reddit выключает RSS 13.11.2026: поиск через RSS убран, у комментариев Arctic Shift есть сжатый вид `--compact`.
+- Hacker News: тред идёт в порядке сайта (10 из 10 лучших комментариев вместо 1–4), поиск больше не требует совпадения всех слов.
+- Новый ключ, если хочешь: `TWITTRAPI_API_KEY`, `BRIGHTDATA_API_KEY` и `BRIGHTDATA_ZONE` — через `/jadlis-search:keys`. Без них всё работает как раньше.
+- Репозиторий теперь живёт на GitHub: https://github.com/becyb-org/jadlis-search. GitLab остаётся копией и CI. Лицензия — Apache-2.0.
+
+### For agents
+
+- Changed: `scripts/websearch.py` — `lite` added to `EXA_TYPES` ($0.004) and is the default for `exa` and `both`; `http_json` retries HTTP 429 twice (Retry-After ≤ 5 s, else 1 s); HTTP 402 writes a per-host stop mark (`~/.cache/jadlis-search/stop-402-<host>`, `JADLIS_SEARCH_STOP_DIR`) and for 15 min returns 402 without a network call; Brave 422 with `country`/`search_lang` retries once without them; empty query dies before the paid call; Exa warns when `--include-domains` has reddit.com; missing-key hints point to the Keychain.
+- Changed: `skills/search/SKILL.md` — routing per the 2026-11 audit (default exa lite, news → brave, HN/Substack → exa `--include-domains`, Reddit → brave `site:reddit.com`), page-text ladder and gate, 402 stop, `brave_llm_context` `maximum_number_of_tokens`; dead `/search-paper`, `/full-research` links fixed; `pdf-fetch.sh` via `${CLAUDE_PLUGIN_ROOT}`. References `exa-rules.md`, `exa-api.md` follow.
+- Added: `scripts/twitterapi.sh` TwittrAPI backend (`TWITTER_BACKEND=auto|twittrapi|twitterapiio`, `format=simple`, stderr `backend=…`, fallback on 401/402/5xx); `balance` prints both backends.
+- Added: `scripts/yandex-bd.py` (Bright Data SERP, raw yandex.ru HTML → yaparse-compatible output, timeout 180 s + 1 retry); `scripts/yandex-search.sh` `MODE=auto` (async 00:00–06:00 MSK, sync otherwise), `--async`, quota note 1 rps, `YANDEX_BACKEND=auto|yandex|brightdata` with fallback on 401/402/403 or a missing key.
+- Changed: `scripts/reddit-archive.py` — `search` without `--sub` exits 2 and points to the MCP `reddit_search`; `--sub` uses Arctic Shift title search (`--fulltext` for bodies); `comments --compact [N]`; Arctic 422 «Timeout» retried.
+- Changed: `scripts/hn-fetch.sh` — `thread` follows Firebase `kids` order (all top-level + ≤ 3 replies, `[id]` per line), `--full` keeps the old tree, Algolia down → ClickHouse Playground; `search` sets `optionalWords` (by-date: all words, auto-retry under 5 hits; `--all-words` opt-out).
+- Changed: `scripts/substack-fetch.py` — custom domains in `<pub>`, `PAYWALL_PREVIEW` on `only_paid`; `scripts/yt-transcript.py` finds the jadlis-tldr venv in the active profile.
+- Changed: `hooks/hooks.json` matcher adds `firecrawl_parse`; `block-pdf-firecrawl.py` denies a local PDF without `pdfOptions.maxPages ≤ 20`.
+- Changed: `.mcp.json` pins `@brave/brave-search-mcp-server@2.1.4`, `firecrawl-mcp@3.25.3`, `redditapis-mcp@0.15.0`, `youtube-data-mcp-server@1.0.16`. Tool names unchanged.
+- Changed: `scripts/secret.sh` knows `TWITTERAPI_IO_KEY`, `TWITTRAPI_API_KEY`, `JINA_API_KEY`, `BRIGHTDATA_API_KEY`, `BRIGHTDATA_ZONE`.
+- Added: tests `test_websearch_retry_jadlis_search.py` (429, 402 stop/expiry), `test_yandex_bd_parse_jadlis_search.py`; evals `route-company-exa-lite`, `route-news-brave`.
+- Changed: `plugin.json` version 2.2.4 → 2.3.0, `license` Apache-2.0 (+ `LICENSE`), `homepage`/`repository` → GitHub becyb-org.
+- Note: jadlis-research and jadlis-science-research vendor `scripts/` — re-vendor (`tools/sync-shared.sh jadlis-search--v2.3.0`).
+
 ## [2.2.4] — 2026-10-19 — дневной лимит поиска настраивается и выключается / daily search cap is configurable and can be turned off
 
 ### Для человека
