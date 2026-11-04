@@ -5,6 +5,20 @@
 
 ## [Unreleased]
 
+## [2.4.0] — 2026-11-04 — Jina с ключом: скрипт jina-read.sh / Jina with a key: jina-read.sh
+
+### Для человека
+
+- Текст страницы через Jina теперь идёт скриптом `jina-read.sh`. Он сам берёт ключ `JINA_API_KEY` из Связки ключей: лимит 500 запросов в минуту вместо ~20 без ключа, поэтому параллельные агенты больше не упираются в 429.
+- Если Jina или сам сайт отказал (в том числе когда Jina отвечает «200», а внутри «Target URL returned error 403/404»), скрипт выходит с кодом 3, и лестница идёт дальше, в Firecrawl.
+- Бесплатный ключ Jina — только для некоммерческого использования; страница стоит 2–10 тыс. токенов, 10 млн бесплатных токенов ≈ 1 000 страниц.
+
+### For agents
+
+- Added: `scripts/jina-read.sh <url> [--timeout SEC]` — key via `secret.sh` (env → Keychain), one retry on 429 (Retry-After ≤ 10 s, else 4 s), keyless retry on 401/402 with a hint, exit 3 on non-2xx, an empty body or a `Warning: Target URL returned error 4xx/5xx` body; stderr `[jina] key|keyless http=… tokens=…`.
+- Changed: `skills/search/SKILL.md` ladder step 2 uses the script.
+- Changed: `.claude-plugin/plugin.json` version 2.3.2 → 2.4.0.
+
 ## [2.3.2] — 2026-11-04 — Bright Data повторяет пустую выдачу / Bright Data retries an empty page
 
 ### Для человека
