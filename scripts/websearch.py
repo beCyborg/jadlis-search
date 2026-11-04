@@ -319,8 +319,32 @@ class TimeoutErr(Exception):
     pass
 
 
+RETRY_429 = 2          # extra attempts after HTTP 429 (SKILL.md: "wait 1 s, retry, max 2")
+RETRY_429_WAIT_MAX = 5  # seconds; a longer Retry-After is not waited for
+
+
 def http_json(method, url, headers, body=None, timeout=DEFAULT_TIMEOUT):
-    """Returns (status, parsed_json_or_text, latency_ms). Raises TimeoutErr on timeout."""
+    """Returns (status, parsed_json_or_text, latency_ms). Raises TimeoutErr on timeout.
+    HTTP 429 is retried up to RETRY_429 times (wait = Retry-After if ≤ RETRY_429_WAIT_MAX, else 1 s)."""
+    total = 0
+    for attempt in range(RETRY_429 + 1):
+        status, parsed, latency, retry_after = _http_json_once(method, url, headers, body, timeout)
+        total += latency
+        if status != 429 or attempt == RETRY_429:
+            return status, parsed, total
+        wait = 1.0
+        try:
+            if retry_after and 0 < float(retry_after) <= RETRY_429_WAIT_MAX:
+                wait = float(retry_after)
+        except ValueError:
+            pass
+        err("[warn] HTTP 429 — retry %d/%d in %.1f s" % (attempt + 1, RETRY_429, wait))
+        time.sleep(wait)
+    return status, parsed, total
+
+
+def _http_json_once(method, url, headers, body, timeout):
+    """One HTTP attempt: (status, parsed_json_or_text, latency_ms, retry_after_header)."""
     data = None
     hdrs = dict(headers)
     hdrs.setdefault("Accept", "application/json")
@@ -336,10 +360,12 @@ def http_json(method, url, headers, body=None, timeout=DEFAULT_TIMEOUT):
             raw = resp.read()
             status = resp.status
             enc = resp.headers.get("Content-Encoding", "")
+            retry_after = None
     except urllib.error.HTTPError as e:
         raw = e.read()
         status = e.code
         enc = e.headers.get("Content-Encoding", "") if e.headers else ""
+        retry_after = e.headers.get("Retry-After") if e.headers else None
     except (socket.timeout, TimeoutError):
         raise TimeoutErr()
     except urllib.error.URLError as e:
@@ -357,7 +383,7 @@ def http_json(method, url, headers, body=None, timeout=DEFAULT_TIMEOUT):
         parsed = json.loads(text) if text.strip() else {}
     except ValueError:
         parsed = text
-    return status, parsed, latency
+    return status, parsed, latency, retry_after
 
 
 def cost_total(parsed):
@@ -693,7 +719,7 @@ def cmd_exa(a):
         return EXIT_OK
     key = exa_key()
     if not key:
-        die("EXA_API_KEY not set — add `export EXA_API_KEY=…` to ~/.zshenv (or ~/.config/exa/key)", EXIT_NOKEY)
+        die("EXA_API_KEY not set — store it in the macOS Keychain: bash scripts/secret.sh --set EXA_API_KEY (or /jadlis-search:keys)", EXIT_NOKEY)
     check_cap(exa_estimate(body), a.force)
     r = run_exa_search(body, key, a.timeout)
     cost_line(r, a.query)
@@ -719,7 +745,7 @@ def cmd_brave(a):
         return EXIT_OK
     key = brave_key()
     if not key:
-        die("BRAVE_API_KEY not set — add `export BRAVE_API_KEY=…` to ~/.zshenv", EXIT_NOKEY)
+        die("BRAVE_API_KEY not set — store it in the macOS Keychain: bash scripts/secret.sh --set BRAVE_API_KEY (or /jadlis-search:keys)", EXIT_NOKEY)
     check_cap(BRAVE_WEB_COST if a.mode == "web" else BRAVE_CTX_COST, a.force)
     r = run_brave(a.mode, params, key, a.timeout)
     cost_line(r, a.query)
@@ -753,7 +779,7 @@ def cmd_both(a):
         return EXIT_OK
     ek, bk = exa_key(), brave_key()
     if not ek and not bk:
-        die("neither EXA_API_KEY nor BRAVE_API_KEY is set (~/.zshenv)", EXIT_NOKEY)
+        die("neither EXA_API_KEY nor BRAVE_API_KEY is set — store them in the macOS Keychain: /jadlis-search:keys", EXIT_NOKEY)
     planned = exa_estimate(body) + (BRAVE_WEB_COST if a.mode == "web" else BRAVE_CTX_COST)
     check_cap(planned, a.force)
     pair_id = uuid.uuid4().hex[:8]
@@ -850,7 +876,7 @@ def cmd_contents(a):
         return EXIT_OK
     key = exa_key()
     if not key:
-        die("EXA_API_KEY not set — add `export EXA_API_KEY=…` to ~/.zshenv", EXIT_NOKEY)
+        die("EXA_API_KEY not set — store it in the macOS Keychain: bash scripts/secret.sh --set EXA_API_KEY (or /jadlis-search:keys)", EXIT_NOKEY)
     est = EXA_PAGE_COST * len(urls) * (1 + (a.subpages or 0))
     check_cap(est, a.force)
     r = mk_result("exa", mode, "contents", len(urls))
@@ -942,7 +968,7 @@ def cmd_context(a):
         return EXIT_OK
     key = exa_key()
     if not key:
-        die("EXA_API_KEY not set — add `export EXA_API_KEY=…` to ~/.zshenv", EXIT_NOKEY)
+        die("EXA_API_KEY not set — store it in the macOS Keychain: bash scripts/secret.sh --set EXA_API_KEY (or /jadlis-search:keys)", EXIT_NOKEY)
     check_cap(EXA_SEARCH_DEFAULT_COST, a.force)
     r = mk_result("exa", str(tokens), "context", 1)
     try:

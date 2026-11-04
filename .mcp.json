@@ -6,7 +6,7 @@
       "args": [
         "npx",
         "-y",
-        "@brave/brave-search-mcp-server"
+        "@brave/brave-search-mcp-server@2.1.4"
       ],
       "env": {
         "BRAVE_API_KEY": "${user_config.BRAVE_API_KEY}",
@@ -20,7 +20,7 @@
       "args": [
         "npx",
         "-y",
-        "firecrawl-mcp"
+        "firecrawl-mcp@3.25.3"
       ],
       "env": {
         "FIRECRAWL_API_KEY": "${user_config.FIRECRAWL_API_KEY}",
@@ -39,7 +39,7 @@
       "args": [
         "npx",
         "-y",
-        "redditapis-mcp@latest"
+        "redditapis-mcp@0.6.1"
       ],
       "env": {
         "REDDITAPIS_KEY": "${user_config.REDDITAPIS_KEY}",
@@ -53,7 +53,7 @@
       "args": [
         "npx",
         "-y",
-        "youtube-data-mcp-server"
+        "youtube-data-mcp-server@1.0.16"
       ],
       "env": {
         "YOUTUBE_API_KEY": "${user_config.YOUTUBE_API_KEY}",
