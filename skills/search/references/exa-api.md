@@ -90,7 +90,7 @@
 
 ## Расхождения доков и провода
 
-- Enum `type` в докax/валидаторе: `auto|fast|instant|deep-lite|deep|deep-reasoning`; `keyword` и `neural` приняты живьём (legacy) — могут отключить без предупреждения: дефолт `auto`, реальный `type` пишется в лог, `selftest.sh --live` ловит 400.
+- Enum `type` в докax/валидаторе: `lite|auto|fast|instant|deep-lite|deep|deep-reasoning` (`lite` $4/1k с 10.2026, дефолт `websearch.py` с 11.2026; контент только из кэша — при text/highlights выпадают результаты без кэша, на тесте 3 из 120 URL поменялись); `keyword` и `neural` приняты живьём (legacy) — могут отключить без предупреждения: дефолт `auto`, реальный `type` пишется в лог, `selftest.sh --live` ловит 400.
 - Скилл `exa-search` ещё называет категорию `research paper`; актуальная — `publication`. MCP-enum `web_search_advanced_exa` принимает `pdf`/`github` — deprecated на сервере.
 - Changelog апреля 2026: `resolvedSearchType`, `highlightScores` «удалены 1 мая» — в ответах присутствуют, доверять нельзя.
 - `search-best-practices` разрешает совмещать `text`+`highlights`; `build-with-exa`/`common-mistakes` — «ровно один» (биллинг ×2). Скрипт следует строгому правилу.
