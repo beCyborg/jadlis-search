@@ -26,9 +26,30 @@ import subprocess
 import sys
 import tempfile
 
-PLUGIN_PY = os.path.expanduser('~/.claude/plugins/data/tldr-youtube-tldr-plugin/venv/bin/python3')
-PLUGIN_SCRIPT = os.path.expanduser(
-    '~/.claude/plugins/marketplaces/youtube-tldr-plugin/skills/tldr/scripts/get_transcript.py')
+def _find_tldr():
+    """youtube-transcript-api lives in the jadlis-tldr plugin's venv. Look in the active profile
+    (CLAUDE_CONFIG_DIR, default ~/.claude) first, then ~/.claude; newest cached plugin version wins.
+    The old youtube-tldr-plugin paths stay as the last fallback. (The hardcoded old paths no longer
+    existed, so the fast step was silently skipped — audit 2026-11.)"""
+    import glob
+    roots = []
+    for r in (os.environ.get('CLAUDE_CONFIG_DIR'), '~/.claude'):
+        if r and os.path.expanduser(r) not in roots:
+            roots.append(os.path.expanduser(r))
+    def ver(path):
+        m = re.search(r'/jadlis-tldr/([0-9.]+)/', path)
+        return tuple(int(x) for x in m.group(1).split('.')) if m else ()
+    for root in roots:
+        pys = [x for x in (glob.glob(root + '/plugins/data/jadlis-tldr-*/venv/bin/python3')
+                           + glob.glob(root + '/plugins/data/tldr-*/venv/bin/python3')) if os.path.exists(x)]
+        scripts = sorted(glob.glob(root + '/plugins/cache/*/jadlis-tldr/*/skills/tldr/scripts/get_transcript.py'), key=ver)
+        if pys and scripts:
+            return pys[0], scripts[-1]
+    return (os.path.expanduser('~/.claude/plugins/data/tldr-youtube-tldr-plugin/venv/bin/python3'),
+            os.path.expanduser('~/.claude/plugins/marketplaces/youtube-tldr-plugin/skills/tldr/scripts/get_transcript.py'))
+
+
+PLUGIN_PY, PLUGIN_SCRIPT = _find_tldr()
 DEFAULT_LANGS = ['en', 'ru', 'pl']
 PAUSE_THRESHOLD = 2.0
 
