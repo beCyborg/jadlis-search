@@ -48,8 +48,8 @@ if "$PY" -c 'import sys; sys.exit(0 if sys.version_info >= (3,9) else 1)'; then 
 if "$PY" -m py_compile "$WS" 2>/dev/null; then pass "py_compile"; else fail "py_compile"; fi
 
 echo "== wave 1: dry-run matrix (\$0) =="
-row "01 exa defaults → auto, n=10, highlights, x-api-key placeholder" \
-  '.engine=="exa" and .body.type=="auto" and .body.numResults==10 and .body.contents.highlights==true
+row "01 exa defaults → lite, n=10, highlights, x-api-key placeholder" \
+  '.engine=="exa" and .body.type=="lite" and .body.numResults==10 and .body.contents.highlights==true
    and .headers["x-api-key"]=="${EXA_API_KEY}" and (.url|endswith("/search"))' \
   -- exa "detailed blog post about python packaging written by a practitioner" --tag research
 
@@ -106,8 +106,8 @@ row "13 brave --mode context → llm/context + tokens" \
    and (.params|has("extra_snippets")|not)' \
   -- brave "q" --tag research --mode context --tokens-brave 4096 --threshold strict
 
-row "14 both → exa auto+highlights n=8, brave web n=8, same query" \
-  '.exa.body.type=="auto" and .exa.body.numResults==8 and .exa.body.contents.highlights==true
+row "14 both → exa lite+highlights n=8, brave web n=8, same query" \
+  '.exa.body.type=="lite" and .exa.body.numResults==8 and .exa.body.contents.highlights==true
    and .brave.params.count==8 and .exa.body.query=="exa vs brave neural search" and .brave.params.q=="exa vs brave neural search"' \
   -- both "exa vs brave neural search" --tag research
 
@@ -226,7 +226,7 @@ if [[ "${1:-}" == "--live" ]]; then
     out=$("$PY" "$WS" exa "Exa search API pricing and free credits" --tag other --type fast -n 3 --contents none --out urls 2>/dev/null); rc=$?
     if [[ $rc -eq 0 && -n "$out" ]]; then pass "live exa fast → $(wc -l <<<"$out" | tr -d ' ') urls"; else fail "live exa fast" "exit $rc"; fi
     out=$("$PY" "$WS" exa "detailed comparison of neural and keyword web search APIs for AI agents" --tag research -n 3 2>/dev/null); rc=$?
-    if [[ $rc -eq 0 ]] && grep -q '── EXA auto' <<<"$out" && grep -q '↳' <<<"$out"; then pass "live exa auto+highlights renders"; else fail "live exa auto" "exit $rc"; fi
+    if [[ $rc -eq 0 ]] && grep -Eq '── EXA (lite|auto)' <<<"$out" && grep -q '↳' <<<"$out"; then pass "live exa default(lite)+highlights renders"; else fail "live exa default" "exit $rc"; fi
     out=$("$PY" "$WS" contents https://exa.ai/docs/reference/pricing --highlights 2>/dev/null); rc=$?
     if [[ $rc -eq 0 ]] && grep -q '── EXA contents highlights' <<<"$out"; then pass "live exa contents highlights"; else fail "live exa contents" "exit $rc"; fi
     "$PY" "$WS" exa "q" --tag other --type keyword -n 1 --contents none >/dev/null 2>"$TMPDIR/ws-kw.err"; rc=$?

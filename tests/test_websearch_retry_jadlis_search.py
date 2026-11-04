@@ -59,10 +59,37 @@ def test_429_gives_up_after_two_retries(monkeypatch):
     assert hits == [429, 429, 429]
 
 
-def test_402_is_not_retried(monkeypatch):
+def test_402_is_not_retried(monkeypatch, tmp_path):
     monkeypatch.setattr(ws.time, "sleep", lambda s: None)
+    monkeypatch.setenv("JADLIS_SEARCH_STOP_DIR", str(tmp_path))
     srv, hits = serve([402, 200])
     status, _, _ = call(srv)
     srv.shutdown()
     assert status == 402
     assert hits == [402]
+
+
+def test_402_stops_the_series(monkeypatch, tmp_path):
+    monkeypatch.setattr(ws.time, "sleep", lambda s: None)
+    monkeypatch.setenv("JADLIS_SEARCH_STOP_DIR", str(tmp_path))
+    srv, hits = serve([402, 200, 200])
+    s1, _, _ = call(srv)
+    s2, parsed2, lat2 = call(srv)
+    srv.shutdown()
+    assert s1 == 402 and s2 == 402
+    assert hits == [402]  # the second call never reached the server
+    assert "STOP" in parsed2["error"] and lat2 == 0
+
+
+def test_stop_expires(monkeypatch, tmp_path):
+    monkeypatch.setattr(ws.time, "sleep", lambda s: None)
+    monkeypatch.setenv("JADLIS_SEARCH_STOP_DIR", str(tmp_path))
+    srv, hits = serve([402, 200])
+    call(srv)
+    f = ws._stop_file("http://127.0.0.1:%d/x" % srv.server_port)
+    old = ws.time.time() - (ws.STOP_402_MIN * 60 + 5)
+    import os
+    os.utime(f, (old, old))
+    s2, _, _ = call(srv)
+    srv.shutdown()
+    assert s2 == 200 and hits == [402, 200]
