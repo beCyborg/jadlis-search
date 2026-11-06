@@ -6,7 +6,7 @@ The query goes to the engine that handles that kind of question — Brave for wo
 and the page text is pulled by a separate ladder with Firecrawl on the last rung.
 
 ```
-claude plugin marketplace add https://gitlab.com/beCyborg/jadlis-hub.git
+claude plugin marketplace add https://github.com/beCyborg/jadlis-hub.git
 claude plugin install jadlis-search@jadlis
 ```
 
@@ -58,7 +58,7 @@ source with a PASS/FAIL table.
 You are the installer. Install the plugin jadlis-search from the jadlis marketplace on this Mac.
 First tell me whether this is macOS: key storage relies on the macOS Keychain.
 Then run exactly these commands, verbatim, shortening nothing:
-1. claude plugin marketplace add https://gitlab.com/beCyborg/jadlis-hub.git
+1. claude plugin marketplace add https://github.com/beCyborg/jadlis-hub.git
 2. claude plugin install jadlis-search@jadlis
 3. claude plugin list — show me the line about jadlis-search and its version.
 The plugin will ask for two required keys, Brave and Firecrawl: I type the values myself, you
@@ -71,7 +71,7 @@ If a command returns an error, stop, show me the output, and do not move to the 
 **b) Commands by hand.**
 
 ```
-claude plugin marketplace add https://gitlab.com/beCyborg/jadlis-hub.git
+claude plugin marketplace add https://github.com/beCyborg/jadlis-hub.git
 claude plugin install jadlis-search@jadlis
 claude plugin list
 ```
