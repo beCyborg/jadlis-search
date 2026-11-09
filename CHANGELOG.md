@@ -5,6 +5,21 @@
 
 ## [Unreleased]
 
+## [2.5.0] — 2026-11-09 — Firecrawl первым в лестнице текста страницы / Firecrawl first in the page-text ladder
+
+### Для человека
+
+- Текст страницы теперь сначала снимает Firecrawl, Jina стала запасной ступенью. На 20 реальных страницах Firecrawl прочитал все 20, Jina — 18: два государственных сайта отвечают ей 403. На русских страницах Firecrawl быстрее: медиана 4 с против 7 с.
+- Новый скрипт `firecrawl-read.sh` сам находит адрес: переменная `FIRECRAWL_API_URL`, локальный ротатор ключей или облачный API с ключом из Связки ключей. Без ключа он сразу отдаёт ход Jina, так что плагин работает и без Firecrawl.
+- Исправлено: когда ключ Jina кончался, запасной запрос без ключа падал из-за ошибки скрипта, и Jina не работала совсем.
+
+### For agents
+
+- Added: `scripts/firecrawl-read.sh <url> [--timeout SEC]` — `/v2/scrape` with `proxy:"auto"`, `onlyMainContent:true`; endpoint `$FIRECRAWL_API_URL` → rotator `127.0.0.1:8642` → `api.firecrawl.dev` + `FIRECRAWL_API_KEY` via `secret.sh`; refuses PDF and x.com/twitter.com; one retry on 429; exit 3 on no key, HTTP error, empty body or target status ≥ 400; stderr `[firecrawl] http=… target=… credits=…`.
+- Changed: ladder order PDF → `pdf-fetch.sh`; HTML → `firecrawl-read.sh` → `jina-read.sh` (SKILL.md, READMEs, plugin description).
+- Fixed: `jina-read.sh` keyless fallback crashed on an empty `auth` array under `set -u` (bash 3.2) — `${auth[@]+"${auth[@]}"}`; usage text and fallback messages updated.
+- Changed: `.claude-plugin/plugin.json` version 2.4.0 → 2.5.0.
+
 ## [2.4.0] — 2026-11-04 — Jina с ключом: скрипт jina-read.sh / Jina with a key: jina-read.sh
 
 ### Для человека

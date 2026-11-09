@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# jina-read.sh — full page text through Jina Reader (r.jina.ai), step 2 of the page-text ladder.
+# jina-read.sh — full page text through Jina Reader (r.jina.ai), step 3 of the page-text ladder:
+# the fallback when firecrawl-read.sh fails (no key, 403, body rejected by the gate).
 # Usage: jina-read.sh <url> [--timeout SEC]      → page text (markdown) on stdout
 #
 # Key: JINA_API_KEY via scripts/secret.sh (env → macOS Keychain). With the key the limit is 500 req/min
@@ -7,15 +8,15 @@
 # The free key is non-commercial (Jina terms); a page costs ~5–10k tokens (x-usage-tokens: 9 385 on a
 # docs page), so the free 10 M tokens ≈ 1 000 pages.
 # Behaviour: 429 → wait (Retry-After ≤ 10 s, else 4 s) and retry once; 402/401 with a key (tokens spent
-# or key revoked) → one keyless try and a hint on stderr. Bench 2026-11 (60 real pages): Jina first
-# gave 52/57 verbatim quotes and 0 false accepts; on failure go to Firecrawl (`proxy:"auto"`).
+# or key revoked) → one keyless try and a hint on stderr. Bench 2026-11-09 (20 real pages): Jina 18/20,
+# Firecrawl 20/20 — so Firecrawl goes first and Jina catches what it fails on.
 # Exit: 0 ok · 1 usage · 3 HTTP error / empty body (caller moves to the next ladder step).
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 url="${1:-}"; shift || true
 TIMEOUT=60
 while [ $# -gt 0 ]; do case "$1" in --timeout) TIMEOUT="${2:?}"; shift 2;; *) echo "unknown option: $1" >&2; exit 1;; esac; done
-[ -n "$url" ] || { sed -n '2,3p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 1; }
+[ -n "$url" ] || { sed -n '2,4p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 1; }
 
 KEY="${JINA_API_KEY:-}"
 [ -n "$KEY" ] || KEY="$(bash "$HERE/secret.sh" JINA_API_KEY 2>/dev/null || true)"
@@ -40,7 +41,7 @@ if [ -n "$KEY" ] && { [ "$CODE" = 402 ] || [ "$CODE" = 401 ]; }; then
   fetch 0
 fi
 if [ "${CODE:0:1}" != 2 ] || [ ! -s "$TMP/body" ]; then
-  echo "[error] jina HTTP $CODE for $url — next ladder step: firecrawl_scrape (proxy auto)" >&2
+  echo "[error] jina HTTP $CODE for $url — ladder exhausted for this URL (behind login → /browser)" >&2
   head -c 300 "$TMP/body" >&2 2>/dev/null; echo >&2
   exit 3
 fi
