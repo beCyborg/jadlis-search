@@ -134,7 +134,9 @@ def lang_of(q):
     if share >= 0.3:
         return "ru"
     if share <= 0.1:
-        return "en"
+        # Latin with diacritics (č ř ž ą ł é ü ß …) is a European language, not English (09.11: Czech logged as en)
+        accented = sum(1 for c in letters if c.isascii() is False and "À" <= c <= "ž")
+        return "latin" if accented / n >= 0.03 else "en"
     return "mixed"
 
 
@@ -653,7 +655,7 @@ def engine_header(r, label=None):
 def render_results(results, full=False, snippets=True):
     lines = []
     for i, x in enumerate(results, 1):
-        path = url_path(x["url"], 10 ** 6 if full else PATH_CAP)
+        path = x["url"] or ""       # always the whole URL: a shortened «…» address went into Firecrawl as is (09.11)
         title = x["title"] if full else cut(x["title"], TITLE_CAP)
         head = "%2d %s · %s" % (i, path, title)
         if x.get("date"):

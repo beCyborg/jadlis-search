@@ -5,6 +5,19 @@
 
 ## [Unreleased]
 
+## [2.5.1] — 2026-11-09 — целые ссылки в выдаче / whole URLs in search output
+
+### Для человека
+- Поиск печатает ссылки целиком: обрезанный «…» адрес раньше уходил в Firecrawl и давал ошибку.
+- Суммы в тексте скиллов больше не портятся: «$0.004» превращалось в «<запрос>.004».
+- Чешские и другие европейские запросы в журнале помечаются как `latin`, а не `en`.
+
+### For agents
+- Fixed: `scripts/websearch.py render_results` prints `x["url"]` unshortened (09.11 on Sergey's Mac: a `…`-cut path passed to `firecrawl-read.sh` → 500).
+- Fixed: `skills/*/SKILL.md` — `$<digits>` amounts rewritten as `<digits> $` (Claude Code substitutes `$0`, `$1` … with skill arguments); `skills/keys` PASS/FAIL helper uses `${@[1]}`/`${@[3]}` instead of `$1`/`$3`.
+- Changed: `lang_of()` returns `latin` for Latin script with ≥ 3 % accented letters (log label only; no API parameter changes).
+
+
 ## [2.5.0] — 2026-11-09 — Firecrawl первым в лестнице текста страницы / Firecrawl first in the page-text ladder
 
 ### Для человека

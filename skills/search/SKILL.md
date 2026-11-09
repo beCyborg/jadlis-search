@@ -31,20 +31,20 @@ argument-hint: <query>
 | Научные публикации / новости по типу | `python3 $S exa "…" --tag research\|news --category publication\|news` |
 | Ограничить домены / даты | Exa: `--include-domains a.com,b.org` `--exclude-domains …` `--start 2026-01-01 --end …`; Brave: `--goggles $'$discard\n$site=vc.ru'` `--freshness pd\|pw\|pm\|py` |
 | Оба движка — **только по явной просьбе** («сравни движки», «через оба») | `python3 $S both "<q>" --tag … [--query-exa "<описание страницы>"]` → синтез → `verdict` (опционально) |
-| Одна страница целиком (снимок под цитату) | лестница из «Routing details»: PDF → `pdf-fetch.sh`; HTML → `bash "${CLAUDE_PLUGIN_ROOT}/scripts/firecrawl-read.sh" "<url>"` → `bash "${CLAUDE_PLUGIN_ROOT}/scripts/jina-read.sh" "<url>"`; Reddit → Reddit-инструменты. Подстраницы / свежий краул сайта — `python3 $S contents <url> --full --subpages 5` (~$0.001/стр.) |
-| Код / API / библиотека | Context7 → `python3 $S context "<q>" [--tokens 5000]` (Exa Code, $0.007) |
+| Одна страница целиком (снимок под цитату) | лестница из «Routing details»: PDF → `pdf-fetch.sh`; HTML → `bash "${CLAUDE_PLUGIN_ROOT}/scripts/firecrawl-read.sh" "<url>"` → `bash "${CLAUDE_PLUGIN_ROOT}/scripts/jina-read.sh" "<url>"`; Reddit → Reddit-инструменты. Подстраницы / свежий краул сайта — `python3 $S contents <url> --full --subpages 5` (~0.001 $/стр.) |
+| Код / API / библиотека | Context7 → `python3 $S context "<q>" [--tokens 5000]` (Exa Code, 0.007 $) |
 | **Страница = PDF** | `bash "${CLAUDE_PLUGIN_ROOT}/scripts/pdf-fetch.sh" "<url>"` → `Read` (0 кр; Firecrawl биллит 1 кр/стр, хук deny-ит) |
 | Новости / картинки / видео | `mcp__plugin_jadlis-search_brave-search__brave_news_search` / `brave_image_search` / `brave_video_search` (или `exa --category news`) |
 | Контент из многих страниц одним вызовом (Brave LLM Context) | `python3 $S brave "<q>" --tag … --mode context` |
 | **Рунет глубже**, региональная выдача, операторы Яндекса | канал `yandex` в `/research` (ключ `YC_SEARCH_API_KEY`) или локальный скилл Яндекс-поиска, если установлен |
-| Многошаговый агентный поиск / список компаний / обогащение | `mcp__exa__agent_run` — $0.025–$1.00 за run, **только по явной просьбе** |
+| Многошаговый агентный поиск / список компаний / обогащение | `mcp__exa__agent_run` — 0.025 $–1.00 $ за run, **только по явной просьбе** |
 
-`--tag` обязателен: `research` · `sources` · `news` · `code` · `people` · `company` · `product` · `other`. Фан-аут **>5 запросов — спросить пользователя**; дневной софт-кап $2 (`--force` — обход). Нет ключа одного движка (`exit 2`) → второй движок без вопросов; `both` при Brave 402/403 печатает `── PAIR DEGRADED` и работает на Exa. **HTTP 402 останавливает серию:** 15 минут все вызовы к тому же хосту сразу отвечают `STOP … 402` без сети — переключи движок, не повторяй (30.10.2026 было 888 вызовов за час после 402).
+`--tag` обязателен: `research` · `sources` · `news` · `code` · `people` · `company` · `product` · `other`. Фан-аут **>5 запросов — спросить пользователя**; дневной софт-кап 2 $ (`--force` — обход). Нет ключа одного движка (`exit 2`) → второй движок без вопросов; `both` при Brave 402/403 печатает `── PAIR DEGRADED` и работает на Exa. **HTTP 402 останавливает серию:** 15 минут все вызовы к тому же хосту сразу отвечают `STOP … 402` без сети — переключи движок, не повторяй (30.10.2026 было 888 вызовов за час после 402).
 
 ## Формулировка запроса — движки разные
 
 - **Brave = keyword-индекс:** ключевые слова, операторы (`site:`, кавычки), goggles. `React server components architecture explained 2026`.
-- **Exa = эмбеддинги:** описание целевой страницы натуральной фразой, без булевых операторов и кавычек; 1–2 слова = разброс. `technical blog post explaining how React server components work internally`. Дефолт `--type lite` + highlights (`auto` — то же качество за $7 вместо $4, медленнее); `-n` не поднимать выше 10–15 — лучше 2–3 запроса с разных углов. Запросы с `site:` на 50-запросном тесте без надёжного победителя: для домена — `--include-domains`, не `site:`.
+- **Exa = эмбеддинги:** описание целевой страницы натуральной фразой, без булевых операторов и кавычек; 1–2 слова = разброс. `technical blog post explaining how React server components work internally`. Дефолт `--type lite` + highlights (`auto` — то же качество за 7 $ вместо 4 $, медленнее); `-n` не поднимать выше 10–15 — лучше 2–3 запроса с разных углов. Запросы с `site:` на 50-запросном тесте без надёжного победителя: для домена — `--include-domains`, не `site:`.
 - **Русский:** Exa — дефолт `lite`, запрос по-русски полным предложением (на RU `lite` лучший, ранг 1,92). `keyword`/`neural` — legacy, для RU не использовать. Глубокий Рунет, регионы, операторы — Яндекс.
 - В `both` один текст уходит обоим; когда формулировки должны различаться — `--query-exa "<описание страницы>"`.
 - Полные правила Exa — `references/exa-rules.md`.
@@ -63,7 +63,7 @@ python3 $S verdict 8e509b38 exa --why relevance --note "Brave дал марке�
 python3 $S contents https://exa.ai/docs --full --subpages 5 --subpage-target api            # --full: без обрезки 8000 симв.
 python3 $S context "python urllib POST json custom headers" --tokens 5000
 python3 $S report --since 14d                                               # сводка лога (стоимость, пары)
-python3 $S exa "q" --tag other --dry-run                                    # тело запроса, $0, ключ не нужен
+python3 $S exa "q" --tag other --dry-run                                    # тело запроса, 0 $, ключ не нужен
 ```
 
 Общие флаги: `--out text|json|urls` · `--dry-run` · `--no-log` · `--full` (снять кэпы длины) · `--force` (обход капа) · `--timeout 20` · `--json-patch '{…}'` (редкие поля: `systemPrompt`, `outputSchema`, `includeText`…).
@@ -73,10 +73,10 @@ Exit: 0 ок (в т.ч. деградированная пара) · 1 usage · 2
 
 ```
 pair=8e509b38 tag=research lang=en n=5  q="…"
-── EXA auto · 1081 ms · $0.0070 · 5 res
+── EXA auto · 1081 ms · 0.0070 $ · 5 res
  1 groundroute.ai/rankings/brave-vs-exa · Brave Search vs Exa: cost, speed & quality… · 2026-03-11
    ↳ выдержка ≤160 симв.
-── BRAVE web · 640 ms · $0.0050 · 5 res
+── BRAVE web · 640 ms · 0.0050 $ · 5 res
  …
 ── OVERLAP top-5 доменов 2/5 · только exa: … · только brave: …
 verdict: python3 …/websearch.py verdict 8e509b38 exa|brave|tie --why relevance|freshness|coverage|lang|noise [--note "…"]
@@ -94,16 +94,16 @@ verdict: python3 …/websearch.py verdict 8e509b38 exa|brave|tie --why relevance
 
 | Движок | Цена | Лимит |
 |---|---|---|
-| Exa `/search` `lite` (дефолт) | $0.004/запрос ≤10 рез. | 10 QPS |
-| Exa `/search` (`auto`/`fast`/`instant`/legacy `keyword`/`neural`) | $0.007/запрос ≤10 рез., +$0.001/рез. сверх; summary +$0.001/стр. | 10 QPS (free 5); `both` = 2 запроса |
-| Exa `deep-lite`/`deep` · `deep-reasoning` | $0.012 · $0.015 | 4–40 с |
-| Exa `/contents` | $0.001/стр. **за тип контента** (text+highlights = ×2) | 100 QPS |
-| Exa `/context` | $0.007 | |
-| Brave web/search | $0.005/запрос | 50 req/s; 429 → ретрай 1 с (max 2, в `http_json`); 402 → стоп серии на 15 мин |
-| Brave llm/context | $0.005 (assumed) | |
+| Exa `/search` `lite` (дефолт) | 0.004 $/запрос ≤10 рез. | 10 QPS |
+| Exa `/search` (`auto`/`fast`/`instant`/legacy `keyword`/`neural`) | 0.007 $/запрос ≤10 рез., +0.001 $/рез. сверх; summary +0.001 $/стр. | 10 QPS (free 5); `both` = 2 запроса |
+| Exa `deep-lite`/`deep` · `deep-reasoning` | 0.012 $ · 0.015 $ | 4–40 с |
+| Exa `/contents` | 0.001 $/стр. **за тип контента** (text+highlights = ×2) | 100 QPS |
+| Exa `/context` | 0.007 $ | |
+| Brave web/search | 0.005 $/запрос | 50 req/s; 429 → ретрай 1 с (max 2, в `http_json`); 402 → стоп серии на 15 мин |
+| Brave llm/context | 0.005 $ (assumed) | |
 | Firecrawl scrape | 1 кр/стр (PDF — 1 кр/**страница** PDF) | 1 req/s |
 
-Бесплатный тир Exa: $10/мес + разовые $10 (11.2026). Legacy `keyword`/`neural` могут отключить — при 400 повторить `--type lite`. Регресс: `bash scripts/selftest.sh` ($0) · `--live` (~$0.02).
+Бесплатный тир Exa: 10 $/мес + разовые 10 $ (11.2026). Legacy `keyword`/`neural` могут отключить — при 400 повторить `--type lite`. Регресс: `bash scripts/selftest.sh` (0 $) · `--live` (~0.02 $).
 
 ## MCP `exa` (без лога)
 
@@ -114,10 +114,10 @@ verdict: python3 …/websearch.py verdict 8e509b38 exa|brave|tie --why relevance
 Canonical web-tool rules (moved here from `~/.claude/rules/routing.md`, 2026-09-06).
 
 - **Native `WebSearch`/`WebFetch` are not used** — Brave and Exa are paid and logged. Main thread goes through `websearch.py` (cost log), not `mcp__exa__*` / `brave_web_search` directly.
-- **Exa** (`EXA_API_KEY`; `lite` $0.004/search is the default, `auto` $0.007): query = description of the target page, no operators. Default engine for every intent except news (blind test 2026-11 on 50 real queries: lite = auto, both beat Brave 32:12; Russian too). Domain-scoped thread search: `--include-domains news.ycombinator.com|substack.com`. **Exa does not index reddit.com** — 0 results, no error, no charge → Reddit via Brave `site:reddit.com` or the Reddit MCP. Deep Runet/regional → `/yandex-search`. MCP `exa` (`web_search_exa`, `web_fetch_exa`, `web_search_advanced_exa`, `agent_run`) — for subagents; `agent_run` only on explicit request ($0.025–$1/run). Do not install plugin `exa@claude-plugins-official` (ships a `search` skill — name collision).
-- **Brave** (Search plan, $0.005/req): news and freshness (`--freshness`, `brave_news_search`); `brave_web_search` (+`extra_snippets`); `site:reddit.com` for Reddit threads. `brave_llm_context` (page content in one call; script `brave --mode context`): pass `maximum_number_of_tokens` (4096 when you need sources, 8192 only when you need page text) — research agents never set it and got 36k-char answers 16× per run (not yet bench-tested for quality). Domain filter: Goggles `$discard\n$site=domain.com` or `site:` operator. Specialized: `brave_news_search`, `brave_image_search`, `brave_video_search`. `brave_summarizer` / Answers API not used. Brave 402/403 (billing) → `both` degrades to Exa, exit 0.
+- **Exa** (`EXA_API_KEY`; `lite` 0.004 $/search is the default, `auto` 0.007 $): query = description of the target page, no operators. Default engine for every intent except news (blind test 2026-11 on 50 real queries: lite = auto, both beat Brave 32:12; Russian too). Domain-scoped thread search: `--include-domains news.ycombinator.com|substack.com`. **Exa does not index reddit.com** — 0 results, no error, no charge → Reddit via Brave `site:reddit.com` or the Reddit MCP. Deep Runet/regional → `/yandex-search`. MCP `exa` (`web_search_exa`, `web_fetch_exa`, `web_search_advanced_exa`, `agent_run`) — for subagents; `agent_run` only on explicit request (0.025 $–1 $/run). Do not install plugin `exa@claude-plugins-official` (ships a `search` skill — name collision).
+- **Brave** (Search plan, 0.005 $/req): news and freshness (`--freshness`, `brave_news_search`); `brave_web_search` (+`extra_snippets`); `site:reddit.com` for Reddit threads. `brave_llm_context` (page content in one call; script `brave --mode context`): pass `maximum_number_of_tokens` (4096 when you need sources, 8192 only when you need page text) — research agents never set it and got 36k-char answers 16× per run (not yet bench-tested for quality). Domain filter: Goggles `$discard\n$site=domain.com` or `site:` operator. Specialized: `brave_news_search`, `brave_image_search`, `brave_video_search`. `brave_summarizer` / Answers API not used. Brave 402/403 (billing) → `both` degrades to Exa, exit 0.
 - **BUG (checked 2026-08-06):** any single non-web type in `result_filter` (`discussions`, `faq`, `infobox`…) → `No web results found`, 0 results. Always add `"web"`: `result_filter=["web","discussions"]`.
-- **Rate limits:** Brave 50 req/s (parallel OK); Exa `/search` 10 QPS (free tier 5), `/contents` 100 QPS; script daily soft cap $2 (`--force`; `JADLIS_SEARCH_DAILY_CAP_USD=0` disables it); Firecrawl scrape ≈ 10 req/min per free key — the rotator moves to the next key on 429 (5 keys ≈ 50 req/min; 50 parallel scrapes passed 09.11). 429: `websearch.py` waits (Retry-After ≤ 5 s, else 1 s) and retries twice by itself. 402: stop the series (see Phase 1).
+- **Rate limits:** Brave 50 req/s (parallel OK); Exa `/search` 10 QPS (free tier 5), `/contents` 100 QPS; script daily soft cap 2 $ (`--force`; `JADLIS_SEARCH_DAILY_CAP_USD=0` disables it); Firecrawl scrape ≈ 10 req/min per free key — the rotator moves to the next key on 429 (5 keys ≈ 50 req/min; 50 parallel scrapes passed 09.11). 429: `websearch.py` waits (Retry-After ≤ 5 s, else 1 s) and retries twice by itself. 402: stop the series (see Phase 1).
 - **Firecrawl:** scrape = one full page or dynamic/interactive site; `map` = site discovery; `extract` = multi-URL structured data (json format + jsonOptions). Fallback chain for a page Firecrawl fails on: scrape+waitFor(5000) → firecrawl_interact → Playwright (`/browser`). Requests go through a local 5-key rotator (`127.0.0.1:8642`, launchd `com.becyborg.firecrawl-rotator`): 402 "insufficient credits" marks the key exhausted and retries the next, transparent to tools; all five exhausted → `All 5 Firecrawl keys exhausted (…)` + macOS notification. Status: `curl -s 127.0.0.1:8642/rotator/status | jq`.
 - **Full-text snapshot ladder** (bench 2026-11-04 on 60 real research pages, ground truth = headless Chromium render: Jina + Firecrawl 57/57, the old defuddle-first ladder 54/57 with 2 silent false accepts; bench 2026-11-09 on 20 more pages, Chrome render, 3 quotes each: Firecrawl read 20/20 pages and 53/60 quotes, Jina 18/20 and 50/60 — two gov sites answer Jina 403; RU median 4 s vs 7 s; 0 false accepts each):
   1. PDF → `pdf-fetch.sh` (free; Firecrawl bills per PDF page).

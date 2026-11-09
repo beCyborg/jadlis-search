@@ -88,8 +88,8 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh" --list
 > У Places API нет hard cap by design: перерасход останавливается только budget alert →
 > отключение billing. Прежде чем звать `places-fetch.sh` хоть раз, поставь бюджет-кап
 > в Google Cloud Console. Дефолтная маска полей попадает в SKU Enterprise
-> ($35/1000 запросов, free tier 1000 событий/мес — при research-объёмах бесплатно);
-> `reviews` в маску не добавлять (+$5/1000).
+> (35 $/1000 запросов, free tier 1000 событий/мес — при research-объёмах бесплатно);
+> `reviews` в маску не добавлять (+5 $/1000).
 
 **Внешние бинарники** (не ключи, но без них каналы деградируют): `jq` (обязателен для
 `secret.sh`, `hn-fetch.sh` и `places-fetch.sh`), `uv` (шебанг `substack-fetch.py` и
@@ -105,10 +105,10 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh" --list
 |---|---|---|
 | `BRAVE_API_KEY` | A | https://api-dashboard.search.brave.com → подписка на тариф **Search** → Subscriptions → API keys |
 | `FIRECRAWL_API_KEY` | A | https://firecrawl.dev/app/api-keys (формат `fc-…`) |
-| `REDDITAPIS_KEY` | A | https://redditapis.com (резервный Reddit-MCP, ~$0.002 за вызов) |
+| `REDDITAPIS_KEY` | A | https://redditapis.com (резервный Reddit-MCP, ~0.002 $ за вызов) |
 | `YOUTUBE_API_KEY` | A | https://console.cloud.google.com → включить **YouTube Data API v3** → Credentials → API key |
-| `EXA_API_KEY` | B | https://dashboard.exa.ai → API Keys (семантический слой `/search`, $0.007/поиск) |
-| `TWITTERAPI_IO_KEY` | B | https://twitterapi.io → Dashboard → API key (слой реплаев/био/трендов Twitter-канала и keyword-фолбэк при мёртвом Grok; $0.15 за 1K твитов, минимальное пополнение снимает лимит 1 запрос/5 с) |
+| `EXA_API_KEY` | B | https://dashboard.exa.ai → API Keys (семантический слой `/search`, 0.007 $/поиск) |
+| `TWITTERAPI_IO_KEY` | B | https://twitterapi.io → Dashboard → API key (слой реплаев/био/трендов Twitter-канала и keyword-фолбэк при мёртвом Grok; 0.15 $ за 1K твитов, минимальное пополнение снимает лимит 1 запрос/5 с) |
 | `PUBMED_API_KEY`, `PUBMED_EMAIL` | B | https://www.ncbi.nlm.nih.gov/account/settings/ → API Key Management |
 | `SEMANTIC_SCHOLAR_API_KEY` | B | https://www.semanticscholar.org/product/api |
 | `OPENALEX_API_KEY`, `OPENALEX_MAILTO` | B | https://openalex.org (freemium dashboard) |
@@ -216,7 +216,8 @@ SECRET="${CLAUDE_PLUGIN_ROOT}/scripts/secret.sh"
 eval "$(bash "$SECRET" --export PUBMED_API_KEY PUBMED_EMAIL SEMANTIC_SCHOLAR_API_KEY \
         OPENALEX_API_KEY OPENALEX_MAILTO CROSSREF_MAILTO UNPAYWALL_EMAIL \
         YC_SEARCH_API_KEY GOOGLE_PLACES_API_KEY 2>/dev/null)"
-p(){ printf '%-18s %s (HTTP %s)\n' "$1" "$([ "$3" = 200 ] && echo PASS || echo FAIL)" "$3"; }
+# no $1/$2/$3 here: Claude Code would replace them with the skill's arguments before the command runs
+p(){ local name code; name="${@[1]}"; code="${@[3]}"; printf '%-18s %s (HTTP %s)\n' "$name" "$([ "$code" = 200 ] && echo PASS || echo FAIL)" "$code"; }
 
 p PubMed "" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 \
   "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=aspirin&retmax=1&retmode=json&api_key=${PUBMED_API_KEY:-}&tool=search-paper&email=${PUBMED_EMAIL:-}")"
