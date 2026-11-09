@@ -31,8 +31,8 @@ def deny(reason):
     sys.exit(0)
 if any(x_host(u) for u in urls):
     deny("x.com/twitter.com: Firecrawl returns an AI-written summary for ~30 credits, not the verbatim page body — "
-         "a snapshot from it will not satisfy a quote gate. Verbatim text: `defuddle parse <url> --md` or "
-         "`curl https://r.jina.ai/<url>`; tweets and threads: bash " + TWITTERAPI + " (TwitterAPI.io REST).")
+         "a snapshot from it will not satisfy a quote gate. Verbatim text: `defuddle parse <url> --md`; "
+         "tweets and threads: bash " + TWITTERAPI + " (TwitterAPI.io REST).")
 if any(PDF.search(u) for u in urls):
     parsers = ti.get("parsers") or []
     maxp = (ti.get("pdfOptions") or {}).get("maxPages")

@@ -5,6 +5,17 @@
 
 ## [Unreleased]
 
+## [2.6.0] — 2026-11-09 — Jina убран из лестницы чтения / Jina dropped from the page-text ladder
+
+### Для человека
+- Текст страницы читает только Firecrawl. Запасной ридер Jina убран: за шесть дней логов он не прочитал ни одной страницы, которую пропустил Firecrawl.
+- Если Firecrawl не прочитал страницу, она помечается «не прочитано». Важную для вывода страницу главная сессия может отдать субагенту `browser-operator`. Без него страница так и остаётся непрочитанной.
+
+### For agents
+- Removed: `scripts/jina-read.sh`; `JINA_API_KEY` from the `scripts/secret.sh` allow-list.
+- Changed: `skills/search/SKILL.md` (description, ladder table, bench line, rung 3 = unread → `browser-operator`), `scripts/firecrawl-read.sh` comments and stderr hints (logic and exit codes unchanged), `hooks/block-pdf-firecrawl.py` x.com deny message (no `r.jina.ai` alternative), `README.md` / `README.en.md`.
+- Migration: a caller of `jina-read.sh` gets «No such file»; treat Firecrawl exit 3 as «page unread».
+
 ## [2.5.1] — 2026-11-09 — целые ссылки в выдаче / whole URLs in search output
 
 ### Для человека
@@ -16,7 +27,6 @@
 - Fixed: `scripts/websearch.py render_results` prints `x["url"]` unshortened (09.11 on Sergey's Mac: a `…`-cut path passed to `firecrawl-read.sh` → 500).
 - Fixed: `skills/*/SKILL.md` — `$<digits>` amounts rewritten as `<digits> $` (Claude Code substitutes `$0`, `$1` … with skill arguments); `skills/keys` PASS/FAIL helper uses `${@[1]}`/`${@[3]}` instead of `$1`/`$3`.
 - Changed: `lang_of()` returns `latin` for Latin script with ≥ 3 % accented letters (log label only; no API parameter changes).
-
 
 ## [2.5.0] — 2026-11-09 — Firecrawl первым в лестнице текста страницы / Firecrawl first in the page-text ladder
 

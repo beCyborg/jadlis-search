@@ -4,13 +4,13 @@
 #
 # Endpoint: $FIRECRAWL_API_URL if set → the local key rotator at 127.0.0.1:8642 if it answers →
 # https://api.firecrawl.dev with FIRECRAWL_API_KEY via scripts/secret.sh (env → macOS Keychain).
-# No endpoint and no key → exit 3 at once (the caller moves to jina-read.sh).
+# No endpoint and no key → exit 3 at once (the caller marks the page unread).
 # Cost: 1 credit per HTML page (proxy "auto" may retry with the stealth proxy on anti-bot pages).
 # Never for PDF (billed per page — use pdf-fetch.sh) or x.com/twitter.com (30 credits, AI-processed);
 # the script refuses both. Bench 2026-11-09 (20 real pages, Chrome render as ground truth): Firecrawl
-# read 20/20, Jina 18/20 (two gov sites answer Jina 403); RU median 4 s vs 7 s.
+# read 20/20; RU median 4 s. Last rung: on exit 3 the page is unread (main session → browser-operator).
 # Behaviour: 429 → wait (the "retry after Ns" hint ≤ 15 s, else 5 s) and retry once (the rotator already
-# switches keys on 429). Exit: 0 ok · 1 usage · 3 HTTP error / empty body / refused URL (next ladder step).
+# switches keys on 429). Exit: 0 ok · 1 usage · 3 HTTP error / empty body / refused URL (page unread).
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 url="${1:-}"; shift || true
@@ -32,7 +32,7 @@ fi
 if [ -z "$BASE" ]; then
   KEY="${FIRECRAWL_API_KEY:-}"
   [ -n "$KEY" ] || KEY="$(bash "$HERE/secret.sh" FIRECRAWL_API_KEY 2>/dev/null || true)"
-  [ -n "$KEY" ] || { echo "[error] firecrawl-read: no FIRECRAWL_API_KEY and no rotator — next ladder step: jina-read.sh" >&2; exit 3; }
+  [ -n "$KEY" ] || { echo "[error] firecrawl-read: no FIRECRAWL_API_KEY and no rotator — page unread (a page the conclusion needs → browser-operator)" >&2; exit 3; }
   BASE="https://api.firecrawl.dev"
 fi
 BASE="${BASE%/}"
@@ -71,10 +71,10 @@ meta = d.get("metadata") or {}
 st = meta.get("statusCode")
 if not (code.startswith("2") and j.get("success") and md.strip()):
     err = j.get("error") or raw[:300] or "no response"
-    sys.stderr.write(f"[error] firecrawl HTTP {code} for {url}: {str(err)[:300]} — next ladder step: jina-read.sh\n")
+    sys.stderr.write(f"[error] firecrawl HTTP {code} for {url}: {str(err)[:300]} — page unread (a page the conclusion needs → browser-operator)\n")
     sys.exit(3)
 if isinstance(st, int) and st >= 400:
-    sys.stderr.write(f"[error] firecrawl: target returned {st} for {url} — next ladder step: jina-read.sh\n")
+    sys.stderr.write(f"[error] firecrawl: target returned {st} for {url} — page unread (a page the conclusion needs → browser-operator)\n")
     sys.exit(3)
 sys.stderr.write(f"[firecrawl] http={code} target={st} credits={meta.get('creditsUsed', '?')} | {url}\n")
 sys.stdout.write(md)

@@ -3,7 +3,8 @@ English · [Русский](README.md)
 # You search by words, the thing you need is filed by meaning — and the page still arrives as a retelling of its headline
 
 The query goes to the engine that handles that kind of question — Brave for words, Exa for meaning —
-and the page text is pulled by a separate ladder: Firecrawl first, Jina when Firecrawl fails.
+and the page text is pulled by a separate ladder: PDFs locally, the rest through Firecrawl; a page it cannot
+read is marked unread.
 
 ```
 claude plugin marketplace add https://github.com/beCyborg/jadlis-hub.git
@@ -27,7 +28,7 @@ This is my workbench published as it is, not a product: whatever I stopped using
 | By hand | With an AI chat | With this plugin |
 |---|---|---|
 | **Which way you search.** One way at a time: either the exact words, or a description of what you need. | It searches with whatever is built into it, and you cannot pick the engine. | Brave answers words and operators, Exa answers a description of the page; the engine follows the kind of question. |
-| **What arrives instead of the page.** You open tabs one by one and read them yourself. | A retelling of the headline and the first paragraphs — you cannot see where the page ended and the guessing began. | The text is pulled by a ladder: Firecrawl first, Jina without its key or on a refusal; PDFs sent to local extraction. |
+| **What arrives instead of the page.** You open tabs one by one and read them yourself. | A retelling of the headline and the first paragraphs — you cannot see where the page ended and the guessing began. | The text is pulled by a ladder: PDFs sent to local extraction, the rest to Firecrawl. A page it cannot read is marked unread. If the conclusion depends on it, the `browser-operator` subagent reads it; where that subagent is not installed, the page stays unread. |
 | **Where the keys live.** In config files in plain text, and in your shell history along the way. | It never asks for keys — and never reaches paid sources. | You enter them once, the value goes into the macOS Keychain; to change one, run `/plugin configure jadlis-search@jadlis`. |
 | **What happens when a channel goes quiet.** You cannot tell whether it broke or was meant to be that way. | It answers as if nothing had dropped out. | Without an optional key the channel degrades along a documented route: Reddit falls back to the no-auth ladder, YouTube to site search and local transcripts. |
 | **What the run cost.** The invoice arrives at the end of the month, too late to unpick. | Spending is never shown at all. | Every call writes a line into the cost log; there is a daily soft cap and a `report` summary. |
@@ -39,7 +40,7 @@ This is my workbench published as it is, not a product: whatever I stopped using
 Going in — your question in plain language.
 Inside — intent decides who answers: Exa (lite type) by default, Brave for fresh news; a blind test on
 50 real queries in November 2026 set that. The full page text is pulled by the ladder
-pdf-fetch → Firecrawl → r.jina.ai, and a hook keeps PDFs and x.com away from Firecrawl.
+pdf-fetch → Firecrawl → unread, and a hook keeps PDFs and x.com away from Firecrawl.
 Coming out — an answer with links, and a spending line in the log.
 
 In words: question → engine picked by intent → results → the full page pulled by the ladder if
