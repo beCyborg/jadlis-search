@@ -24,7 +24,7 @@ TMP="$(mktemp -d "${TMPDIR:-/tmp}/jina.XXXXXX")"; trap 'rm -rf "$TMP"' EXIT
 fetch() {  # fetch <use-key 0|1> → sets CODE, body in $TMP/body, headers in $TMP/h
   local auth=()
   [ "$1" = 1 ] && [ -n "$KEY" ] && auth=(-H "Authorization: Bearer $KEY")
-  CODE=$(curl -sS -L --max-time "$TIMEOUT" "${auth[@]}" -D "$TMP/h" -o "$TMP/body" -w '%{http_code}' \
+  CODE=$(curl -sS -L --max-time "$TIMEOUT" ${auth[@]+"${auth[@]}"} -D "$TMP/h" -o "$TMP/body" -w '%{http_code}' \
          "https://r.jina.ai/$url" 2>"$TMP/err") || CODE=000
 }
 
