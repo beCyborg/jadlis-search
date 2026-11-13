@@ -26,7 +26,7 @@ case "$low" in
 esac
 
 BASE="${FIRECRAWL_API_URL:-}"; KEY=""
-if [ -z "$BASE" ] && curl -s --max-time 1 -o /dev/null http://127.0.0.1:8642/rotator/status; then
+if [ -z "$BASE" ] && curl -s --max-time 1 -o /dev/null http://127.0.0.1:8642/rotator/health; then
   BASE="http://127.0.0.1:8642"          # the rotator injects its own keys
 fi
 if [ -z "$BASE" ]; then

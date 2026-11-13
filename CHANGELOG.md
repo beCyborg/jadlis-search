@@ -5,6 +5,14 @@
 
 ## [Unreleased]
 
+## [2.6.1] — 2026-11-13 — скрипт снова находит ротатор ключей / the page script finds the key rotator again
+
+### Для человека
+- Скрипт чтения страниц снова ходит в Firecrawl через локальный ротатор ключей. Раньше он не успевал дождаться ротатора и шёл напрямую с одним ключом. Когда у этого ключа кончались кредиты, страница не читалась, хотя у других ключей кредиты были.
+
+### For agents
+- Fixed: `scripts/firecrawl-read.sh` probes `/rotator/health` (≈ 3 ms) instead of `/rotator/status`. The status endpoint queries credits for every key and answers in 3–4 s, so the 1 s probe always timed out and the script fell back to `FIRECRAWL_API_KEY` from the Keychain (HTTP 402 once that key was empty). Exit codes and output unchanged.
+
 ## [2.6.0] — 2026-11-09 — Jina убран из лестницы чтения / Jina dropped from the page-text ladder
 
 ### Для человека
