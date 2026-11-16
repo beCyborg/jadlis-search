@@ -5,6 +5,15 @@
 
 ## [Unreleased]
 
+## [2.6.3] — 2026-11-16 — папки vault не зашиты / Vault folders are not hardcoded
+
+### Для человека
+- Уборка рабочих папок ресерча (`workdir-gc.py`) ищет ссылки на прогон во всех заметках vault, а не только в `Знания/`. Раньше в vault без папки `Знания/` каждый прогон выглядел брошенным и шёл под удаление через 7 дней.
+- Контракт записи в vault называет папку ресерчей настройкой, а дневную заметку берёт из `obsidian daily:path`.
+
+### For agents
+- Changed (vendored by jadlis-research 2.15.0 / jadlis-science-research 2.5.0): `scripts/workdir-gc.py` scans every `.md` under `--root` (dot folders skipped) for `work_dir:` references instead of `<root>/Знания/` only; `shared/obsidian-write-contract.md` names the research folder as `RESEARCH_DIR` and falls back from `obsidian daily:path` only when it prints no `.md` path.
+
 ## [2.6.2] — 2026-11-15 — чтение PDF на Linux / PDF reading on Linux
 
 ### Для человека
