@@ -14,7 +14,7 @@ argument-hint: "[--check — только проверка, без записи]
 
 | Класс | Что за ключи | Кто пишет | Как читает |
 |---|---|---|---|
-| **A** — ключи MCP-серверов плагина | `BRAVE_API_KEY`, `FIRECRAWL_API_KEY`, `REDDITAPIS_KEY`, `YOUTUBE_API_KEY` | сам Claude Code: `/plugin configure jadlis-search@jadlis`, диалог при включении плагина или `claude plugin install … --config KEY=…` | MCP — через `${user_config.KEY}`; Bash — через `secret.sh` |
+| **A** — ключи MCP-серверов плагина | `BRAVE_API_KEY`, `FIRECRAWL_API_KEY`, `REDDITAPIS_KEY`, `YOUTUBE_API_KEY` | сам Claude Code: `/plugin configure jadlis-search@jadlis`, диалог при включении плагина или `claude plugin install … --config KEY=…` | MCP — через `${user_config.KEY}` (пустая настройка → переменная окружения сессии, так ключ приходит в треды сервера); Bash — через `secret.sh` |
 | **B** — ключи скриптов и `curl`-блоков | научные источники, Exa, Yandex, Places, контактные почты | этот скилл: `secret.sh --set KEY` (значение приходит на stdin) | `secret.sh KEY` или прелюд `eval "$(… --export …)"` |
 
 Порядок разрешения в `secret.sh`: (1) переменная окружения, (2) Keychain `jadlis`/`KEY` (fallback `jadlis-research`),

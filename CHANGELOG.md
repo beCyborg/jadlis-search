@@ -5,6 +5,15 @@
 
 ## [Unreleased]
 
+## [2.6.5] — 2026-11-16 — ключи MCP из окружения / MCP keys from the environment
+
+### Для человека
+- MCP-серверы плагина (Brave, Firecrawl, запасной Reddit, YouTube) берут ключ из окружения сессии, если в настройках плагина ключ пустой. Так ключи с сервера (переменные проекта bb) доходят до тредов. Раньше пустая настройка затирала такой ключ, и, например, запасной Reddit в треде сервера работал без ключа.
+- Если ключ задан в настройках плагина, всё как раньше: работает он.
+
+### For agents
+- Fixed: `.mcp.json` passes the four key options as `JADLIS_OPT_<NAME>` (`BRAVE_API_KEY`, `FIRECRAWL_API_KEY`, `REDDITAPIS_KEY`, `YOUTUBE_API_KEY`); `scripts/mcp-run` exports `<NAME>` from a non-empty option and otherwise keeps `<NAME>` inherited from the session (an empty or literal `${user_config.…}` never overrides it), then unsets `JADLIS_OPT_*`. Before, an unset optional option was substituted as `""` into an `env` entry named `<NAME>` and blanked the inherited variable — measured on jadlis-vps: `REDDITAPIS_KEY` reached `redditapis-mcp` with length 0 although the session had it. Option names, server names and tool names are unchanged; relay mode (`*_mcp_url`) is unaffected. Checked under dash (Debian) and macOS sh. `skills/keys/SKILL.md` notes the fallback.
+
 ## [2.6.4] — 2026-11-16 — HN и Яндекс на Linux / HN and Yandex on Linux
 
 ### Для человека

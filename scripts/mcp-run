@@ -3,7 +3,15 @@
 #   JADLIS_MCP_URL empty -> run the stdio package given as arguments (default for everyone)
 #   JADLIS_MCP_URL set   -> relay stdio to that shared Streamable HTTP server (one daemon per machine
 #                           instead of one package copy per session); see scripts/mcp-relay.py
+# Keys come in as JADLIS_OPT_<NAME> (the plugin option). A set option wins; an empty one keeps <NAME> from the
+# session's environment (bb project variables on a server) — an `env` entry named <NAME> itself would blank it.
 # Both branches exec, so no extra wrapper process stays behind.
+for name in $(env | sed -n 's/^JADLIS_OPT_\([A-Za-z0-9_]*\)=.*/\1/p'); do
+  eval "val=\${JADLIS_OPT_$name}"
+  case "$val" in ''|'${user_config.'*) ;; *) export "$name=$val" ;; esac
+  unset "JADLIS_OPT_$name"
+done
+unset name val
 if [ -n "$JADLIS_MCP_URL" ]; then
   exec python3 "$(dirname "$0")/mcp-relay.py"
 fi

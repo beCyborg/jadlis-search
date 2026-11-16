@@ -9,7 +9,7 @@
         "@brave/brave-search-mcp-server@2.1.4"
       ],
       "env": {
-        "BRAVE_API_KEY": "${user_config.BRAVE_API_KEY}",
+        "JADLIS_OPT_BRAVE_API_KEY": "${user_config.BRAVE_API_KEY}",
         "JADLIS_MCP_URL": "${user_config.brave_mcp_url}",
         "JADLIS_MCP_BEARER": "${user_config.shared_mcp_token}"
       }
@@ -23,7 +23,7 @@
         "firecrawl-mcp@3.25.3"
       ],
       "env": {
-        "FIRECRAWL_API_KEY": "${user_config.FIRECRAWL_API_KEY}",
+        "JADLIS_OPT_FIRECRAWL_API_KEY": "${user_config.FIRECRAWL_API_KEY}",
         "FIRECRAWL_API_URL": "${user_config.FIRECRAWL_API_URL}",
         "JADLIS_MCP_URL": "${user_config.firecrawl_mcp_url}",
         "JADLIS_MCP_BEARER": "${user_config.shared_mcp_token}"
@@ -42,7 +42,7 @@
         "redditapis-mcp@0.15.0"
       ],
       "env": {
-        "REDDITAPIS_KEY": "${user_config.REDDITAPIS_KEY}",
+        "JADLIS_OPT_REDDITAPIS_KEY": "${user_config.REDDITAPIS_KEY}",
         "JADLIS_MCP_URL": "${user_config.reddit_alt_mcp_url}",
         "JADLIS_MCP_BEARER": "${user_config.shared_mcp_token}"
       }
@@ -56,7 +56,7 @@
         "youtube-data-mcp-server@1.0.16"
       ],
       "env": {
-        "YOUTUBE_API_KEY": "${user_config.YOUTUBE_API_KEY}",
+        "JADLIS_OPT_YOUTUBE_API_KEY": "${user_config.YOUTUBE_API_KEY}",
         "JADLIS_MCP_URL": "${user_config.youtube_mcp_url}",
         "JADLIS_MCP_BEARER": "${user_config.shared_mcp_token}"
       }
