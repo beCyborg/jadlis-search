@@ -5,6 +5,15 @@
 
 ## [Unreleased]
 
+## [2.6.4] — 2026-11-16 — HN и Яндекс на Linux / HN and Yandex on Linux
+
+### Для человека
+- Поиск по Hacker News снова работает на сервере (Linux). Раньше скрипт падал с ошибкой `File: unbound variable`, поэтому канал HN в ресерче на сервере молчал. На MacBook всё работает как раньше.
+- Поиск в Яндексе на сервере больше не падает, когда стоит отметка «API Яндекса недоступен» (после ответа 401/402/403): скрипт сразу уходит в Bright Data, как на MacBook.
+
+### For agents
+- Fixed: `scripts/hn-fetch.sh` reads file mtime through a `mtime()` helper — GNU `stat -c %Y` on Linux, BSD `stat -f %m` on macOS (GNU `stat -f` prints file-system status, which broke the cache and canary age arithmetic under `set -u`: `line 54: File: unbound variable`); `--since`/`--until` dates parse with GNU `date -d` on Linux (midnight, local time) and BSD `date -j -f` on macOS (unchanged); `scripts/yandex-search.sh` uses the same `mtime()` for the 6-hour API-down marker (with the marker present it crashed on Linux). Checked on macOS 27 and Debian 13 (jadlis-vps): search miss/hit, thread miss/hit, canary, `--since`, marker fresh/stale. Vendored by jadlis-research 2.15.2 and jadlis-science-research 2.5.2 (hn-fetch only).
+
 ## [2.6.3] — 2026-11-16 — папки vault не зашиты / Vault folders are not hardcoded
 
 ### Для человека

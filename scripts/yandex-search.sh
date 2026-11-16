@@ -308,14 +308,17 @@ bd_fallback() { # $1 reason → exec Bright Data backend with the same query/out
 }
 API_DOWN_MARK="${JADLIS_SEARCH_STOP_DIR:-$HOME/.cache/jadlis-search}/yandex-api-down"
 API_DOWN_TTL=$((6*3600))   # after 401/402/403 the API is skipped for 6 h (no noisy 403 before every fallback)
-api_down_fresh() { [[ -f "$API_DOWN_MARK" ]] && (( $(date +%s) - $(stat -f %m "$API_DOWN_MARK" 2>/dev/null || echo 0) < API_DOWN_TTL )); }
+# mtime in epoch seconds: GNU stat (Linux) or BSD stat (macOS); GNU `stat -f` means file-system status.
+if stat -c %Y / >/dev/null 2>&1; then mtime() { stat -c %Y "$1" 2>/dev/null || echo 0; }
+else mtime() { stat -f %m "$1" 2>/dev/null || echo 0; }; fi
+api_down_fresh() { [[ -f "$API_DOWN_MARK" ]] && (( $(date +%s) - $(mtime "$API_DOWN_MARK") < API_DOWN_TTL )); }
 BD_KEY_PRESENT=0
 if [[ -n "${BRIGHTDATA_API_KEY:-}" ]] || bash "$SCRIPT_DIR/secret.sh" BRIGHTDATA_API_KEY >/dev/null 2>&1; then BD_KEY_PRESENT=1; fi
 if [[ "${YANDEX_BACKEND:-auto}" == "brightdata" && "$MODE" != "fetch" && $DRY_RUN -eq 0 ]]; then
   bd_fallback "YANDEX_BACKEND=brightdata"
 fi
 if [[ "${YANDEX_BACKEND:-auto}" == "auto" && "$MODE" != "fetch" && $DRY_RUN -eq 0 && $BD_KEY_PRESENT -eq 1 ]] && api_down_fresh; then
-  bd_fallback "Yandex Search API marked down $(( ($(date +%s) - $(stat -f %m "$API_DOWN_MARK")) / 60 )) min ago (rm $API_DOWN_MARK to retry the API)"
+  bd_fallback "Yandex Search API marked down $(( ($(date +%s) - $(mtime "$API_DOWN_MARK")) / 60 )) min ago (rm $API_DOWN_MARK to retry the API)"
 fi
 
 if [[ "$MODE" == "sync" ]]; then
